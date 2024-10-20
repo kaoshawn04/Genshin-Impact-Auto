@@ -14,7 +14,20 @@ class Mouse():
     
     
     @staticmethod
-    def move_to():
+    def move_to(x: int = None, y: int = None, dx: int = None, dy:int = None):
+        if x is None or y is None:
+            if dx in None or dy is None:
+                raise ValueError("Missing arguments.")
+            
+            else:
+                pass
+            
+        else:
+            pass
+    
+    
+    @staticmethod
+    def drag_to():
         pass
     
     
@@ -30,14 +43,14 @@ class Mouse():
 
 class Keyboard():
     @staticmethod
-    def _keyboard_event(message, key):
+    def _keyboard_event(event: int, key: str):
         if key in virtual_key_map.keys():
             virtual_key = virtual_key_map[key]
             
         else:
             virtual_key = ord(key.upper())
             
-        Win32api.send_input(event=message, virtual_key=virtual_key)
+        Win32api.send_input(event=event, virtual_key=virtual_key)
 
 
     @staticmethod
@@ -47,29 +60,24 @@ class Keyboard():
 
         keys = [keys] if type(keys) != list else keys
         for key in keys:
-            Keyboard._keyboard_event(message=KEYEVENTF_KEYDOWN, key=key)
+            Keyboard._keyboard_event(event=KEYEVENTF_KEYDOWN, key=key)
             time.sleep(pause)
-            Keyboard._keyboard_event(message=KEYEVENTF_KEYUP, key=key)
+            Keyboard._keyboard_event(event=KEYEVENTF_KEYUP, key=key)
 
 
     @staticmethod
     def keydown(keys: str | list):
         keys = [keys] if type(keys) != list else keys
         for key in keys:
-            Keyboard._keyboard_event(message=KEYEVENTF_EXTENDEDKEY, key=key)
+            Keyboard._keyboard_event(event=KEYEVENTF_EXTENDEDKEY, key=key)
 
 
     @staticmethod
     def keyup(keys: str | list):
         keys = [keys] if type(keys) != list else keys
         for key in keys:
-            Keyboard._keyboard_event(message=KEYEVENTF_KEYUP, key=key)  
-            
-            
+            Keyboard._keyboard_event(event=KEYEVENTF_KEYUP, key=key) 
+    
+    
 if __name__ == "__main__":
-    if not pyuac.isUserAdmin():
-        pyuac.runAsAdmin()
-        
-    time.sleep(5)
-    Keyboard.press(" ")
     
