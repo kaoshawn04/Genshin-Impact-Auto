@@ -16,9 +16,50 @@ MOUSEEVENTF_RIGHTUP = 0x0010
 
 
 KEYEVENTF_KEYDOWN = 0x0000
+KEYEVENTF_EXTENDEDKEY = 0x0001
 KEYEVENTF_KEYUP = 0x0002
 KEYEVENTF_SCANCODE = 0x0008
 KEYEVENTF_UNICODE = 0x0004
+
+
+virtual_key_map = {
+    "back": 0x08, "backspace": 0x08,
+    "tab": 0x09,
+    "return": 0x0D,
+    "shift": 0x10,
+    "ctrl": 0x11, "control": 0x11,
+    "alt": 0x12, "menu": 0x12,
+    "caps": 0x14, "capital": 0x14,
+    "esc": 0x1B, "escape": 0x1B,
+    "space": 0x20,
+    "left": 0x25,
+    "up": 0x26,
+    "right": 0x27,
+    "down": 0x28,
+    "del": 0x2E, "delete": 0x2E,
+        
+    "f1": 0x70,
+    "f2": 0x71,
+    "f3": 0x72,
+    "f4": 0x73,
+    "f5": 0x74,
+    "f6": 0x75,
+    "f7": 0x76,
+    "f8": 0x77,
+    "f9": 0x78,
+    "f10": 0x79,
+    "f11": 0x7A,
+    "f12": 0x7B,
+    
+    "lwin": 0x5B,
+    "rwin": 0x5C,
+    "lshift": 0xA0,
+    "rshift": 0xA1,
+    "lcontrol": 0xA2,
+    "rcontrol": 0xA3,
+    "lmenu": 0xA4,
+    "rmenu": 0xA5
+}
 
 
 class MOUSEINPUT(ctypes.Structure):

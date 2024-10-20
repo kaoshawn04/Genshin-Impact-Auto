@@ -1,52 +1,69 @@
+import sys
 import time
 import pyuac
 
+sys.path.append("./libraries/windows_api")
 from windows_api.api import Win32api
 from windows_api.common import *
-
-
-keyboard_map = {
-    "f1": 0x70,
-    "f2": 0x71,
-    "f3": 0x72,
-}
         
+
+class Mouse():
+    @staticmethod
+    def _mouse_event():
+        pass
+    
+    
+    @staticmethod
+    def move_to():
+        pass
+    
+    
+    @staticmethod
+    def click():
+        pass
+    
+    
+    @staticmethod
+    def scroll():
+        pass 
+    
 
 class Keyboard():
-    def __init__(self, hwnd):
-        self.hwnd = hwnd
-
- 
-    def _keyboard_event(self, message, **params):
-        key = params["key"].lower()
-        
-        if key in keyboard_map.keys():
-            vitual_key = keyboard_map[key]
-
+    @staticmethod
+    def _keyboard_event(message, key):
+        if key in virtual_key_map.keys():
+            virtual_key = virtual_key_map[key]
+            
         else:
-            vitual_key = ord(key)
+            virtual_key = ord(key.upper())
+            
+        Win32api.send_input(event=message, virtual_key=virtual_key)
 
-        Win32api.post_message(self.hwnd, message, vitual_key, 0)
 
-
-    def press(self, keys: str | list, pause: float = None):
+    @staticmethod
+    def press(keys: str | list, pause: float = None):
         if pause is None:  
             pause = 0.01
 
+        keys = [keys] if type(keys) != list else keys
         for key in keys:
-            self.keyboard_event(message=0x0100, key=key)
+            Keyboard._keyboard_event(message=KEYEVENTF_KEYDOWN, key=key)
             time.sleep(pause)
-            self._keyboard_event(message=0x0101, key=key)
+            Keyboard._keyboard_event(message=KEYEVENTF_KEYUP, key=key)
 
 
-    def keydown(self, keys: str | list):
+    @staticmethod
+    def keydown(keys: str | list):
+        keys = [keys] if type(keys) != list else keys
         for key in keys:
-            self._keyboard_event(message=0x0100, key=key)
+            Keyboard._keyboard_event(message=KEYEVENTF_EXTENDEDKEY, key=key)
 
 
-    def keyup(self, hwnd, keys: str | list):
+    @staticmethod
+    def keyup(keys: str | list):
+        keys = [keys] if type(keys) != list else keys
         for key in keys:
-            self._keyboard_event(message=0x0101, key=key)  
+            Keyboard._keyboard_event(message=KEYEVENTF_KEYUP, key=key)  
             
             
 if __name__ == "__main__":
@@ -54,6 +71,5 @@ if __name__ == "__main__":
         pyuac.runAsAdmin()
         
     time.sleep(5)
+    Keyboard.press(" ")
     
-    window = Win32api.find_window(window_name="原神")
-    Keyboard(window).press("b")
