@@ -20,10 +20,10 @@ class Mouse():
                 raise ValueError("Missing arguments.")
             
             else:
-                pass
+                Mouse._mouse_event(event=MOUSEEVENTF_MOVE, dx=dx, dy=dy)
             
         else:
-            pass
+            Mouse._mouse_event(event=MOUSEEVENTF_ABSOLUTE, dx=dx, dy=dy)
     
     
     @staticmethod

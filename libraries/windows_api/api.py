@@ -1,6 +1,7 @@
 import sys
 import ctypes
 
+from ctypes import wintypes
 from typing import Optional
 
 sys.path.append("./libraries/windows_api/common")
@@ -36,6 +37,24 @@ class Win32api():
         """
         user32.SetForegroundWindow(hwnd)
         
+        
+    @staticmethod
+    def get_window_size(hwnd: int) -> dict:
+        rect = ctypes.wintypes.RECT()
+        ctypes.windll.dwmapi.DwmGetWindowAttribute(
+            ctypes.wintypes.HWND(hwnd),
+            ctypes.wintypes.DWORD(DWMWA_EXTENDED_FRAME_BOUNDS),
+            ctypes.byref(rect),
+            ctypes.sizeof(rect)
+        )
+        
+        return {
+                "x": rect.left,
+                "y": rect.top, 
+                "w": rect.right - (rect.left + 4),
+                "h": rect.bottom - (rect.top + 60)
+            }
+    
         
     @staticmethod
     def send_input(
