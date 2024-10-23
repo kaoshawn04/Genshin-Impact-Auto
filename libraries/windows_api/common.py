@@ -2,7 +2,7 @@ import ctypes
 
 from ctypes import wintypes
 
-
+# send input
 INPUT_MOUSE = 0
 INPUT_KEYBOARD = 1
 INPUT_HARDWARE = 2
@@ -26,7 +26,7 @@ KEYEVENTF_KEYUP = 0x0002
 KEYEVENTF_SCANCODE = 0x0008
 KEYEVENTF_UNICODE = 0x0004
 
-
+# get window size
 DWMWA_EXTENDED_FRAME_BOUNDS = 9
 
 
@@ -70,6 +70,7 @@ virtual_key_map = {
 }
 
 
+# send input
 class MOUSEINPUT(ctypes.Structure):
     _fields_ = [
         ("dx", wintypes.LONG),
@@ -110,4 +111,12 @@ class INPUT(ctypes.Structure):
     _fields_ = [
         ("type", wintypes.DWORD),
         ("input", _Inner),
+    ]
+    
+
+# get cursor position
+class POINT(ctypes.Structure):
+    _fields_ = [
+        ("x", ctypes.c_long),
+        ("y", ctypes.c_long)
     ]

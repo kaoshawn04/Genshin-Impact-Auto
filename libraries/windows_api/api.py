@@ -35,34 +35,51 @@ class Win32api():
         """
         Set the window into foreground via handle of the window.
         """
+        
         user32.SetForegroundWindow(hwnd)
         
         
     @staticmethod
-    def get_window_size(hwnd: int) -> dict:
+    def get_window_size(hwnd: int) -> tuple:
         rect = ctypes.wintypes.RECT()
         ctypes.windll.dwmapi.DwmGetWindowAttribute(
-            ctypes.wintypes.HWND(hwnd),
-            ctypes.wintypes.DWORD(DWMWA_EXTENDED_FRAME_BOUNDS),
+            hwnd,
+            DWMWA_EXTENDED_FRAME_BOUNDS,
             ctypes.byref(rect),
             ctypes.sizeof(rect)
         )
         
-        return {
-                "x": rect.left,
-                "y": rect.top, 
-                "w": rect.right - (rect.left + 4),
-                "h": rect.bottom - (rect.top + 60)
-            }
-    
+        return (
+                rect.left,
+                rect.top, 
+                rect.right - (rect.left + 4),
+                rect.bottom - (rect.top + 60)
+            )
         
+        
+    @staticmethod
+    def get_screen_size() -> tuple:
+        w = user32.GetSystemMetrics(0)
+        h = user32.GetSystemMetrics(1)
+        
+        return (w, h)     
+
+
+    @staticmethod
+    def get_cursor_position() -> tuple:
+        point = POINT()
+        user32.GetCursorPos(ctypes.byref(point))
+        
+        return (point.x, point.y)
+    
+       
     @staticmethod
     def send_input(
         type: int,
         event: int,
-        delta_x: int = 0,
-        delta_y: int = 0,
-        delta_wheel: int = 0,
+        dx: int = 0,
+        dy: int = 0,
+        mouseData: int = 0,
         virtual_key: int = 0
     ):
         """
@@ -70,20 +87,31 @@ class Win32api():
 
         Args:
             type: mouse: 0, keyboard: 1
-            event: keydown: 0, keyup: 2.
-            virtual_key: The key in ASCII code.
+            event: 
+                See common.py
+            dx (mouse event):
+                If event is MOUSEEVENTF_ABSOLUTE (0x8000), 
+                this should be int(x * 65535 / screen width).
+                Or this will be the numbers of pixel moved.
+            dy (mouse input):
+                Same as dx.
+            wheel (mouse input):
+                Positive value for rotate forward,
+                negative value for rotate backward.
+            virtual_key (keyboard input): The key in ASCII code.
         """
+
         input = INPUT(type=ctypes.c_ulong(type))
-        
+
         if type is INPUT_MOUSE:
             input.mi = MOUSEINPUT(
-                dx=delta_x,
-                dy=delta_y,
-                mouseData=delta_wheel,
-                daFlags=event,
+                dx=dx,
+                dy=dy,
+                mouseData=mouseData,
+                dwFlags=event,
                 time=0
             )
-        
+
         elif type is INPUT_KEYBOARD:
             input.ki = KEYBDINPUT(
                 wVk=virtual_key,
@@ -91,6 +119,5 @@ class Win32api():
                 dwFlags=event,
                 time=0
             )
-        
-        
+
         user32.SendInput(1, ctypes.pointer(input), ctypes.sizeof(INPUT))
