@@ -66,13 +66,31 @@ class Win32api():
 
 
     @staticmethod
-    def get_cursor_position() -> tuple:
+    def get_mouse_position() -> tuple:
         point = POINT()
         user32.GetCursorPos(ctypes.byref(point))
         
         return (point.x, point.y)
     
-       
+    
+    @staticmethod
+    def get_mouse_speed():
+        speed = ctypes.c_int()
+        user32.SystemParametersInfoA(SPI_GETMOUSESPEED, 0, ctypes.byref(speed), 0)
+        
+        return speed.value
+    
+    
+    @staticmethod
+    def set_mouse_speed(speed):
+        user32.SystemParametersInfoA(
+            SPI_SETMOUSESPEED,
+            0,
+            speed,
+            SPIF_UPDATEINIFILE | SPIF_SENDCHANGE
+        )
+
+
     @staticmethod
     def send_input(
         type: int,

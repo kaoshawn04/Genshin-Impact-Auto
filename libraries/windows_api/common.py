@@ -2,11 +2,11 @@ import ctypes
 
 from ctypes import wintypes
 
+
 # send input
 INPUT_MOUSE = 0
 INPUT_KEYBOARD = 1
 INPUT_HARDWARE = 2
-
 
 MOUSEEVENTF_MOVE = 0x0001
 MOUSEEVENTF_LEFTDOWN = 0x0002
@@ -19,15 +19,25 @@ MOUSEEVENTF_WHEEL = 0x0800
 MOUSEEVENTF_HWHEEL = 0x1000
 MOUSEEVENTF_ABSOLUTE = 0x8000
 
-
 KEYEVENTF_KEYDOWN = 0x0000
 KEYEVENTF_EXTENDEDKEY = 0x0001
 KEYEVENTF_KEYUP = 0x0002
 KEYEVENTF_SCANCODE = 0x0008
 KEYEVENTF_UNICODE = 0x0004
 
+
 # get window size
 DWMWA_EXTENDED_FRAME_BOUNDS = 9
+
+
+# get cursor speed
+SPIF_UPDATEINIFILE = 0x01
+SPIF_SENDCHANGE = 0x02
+SPI_GETMOUSESPEED = 0x0070
+
+
+# set mouse speed
+SPI_SETMOUSESPEED = 0x0071
 
 
 virtual_key_map = {
@@ -81,7 +91,6 @@ class MOUSEINPUT(ctypes.Structure):
         ("dwExtraInfo", ctypes.POINTER(wintypes.ULONG)),
     ]
 
-
 class KEYBDINPUT(ctypes.Structure):
     _fields_ = [
         ("wVk", wintypes.WORD),
@@ -91,14 +100,12 @@ class KEYBDINPUT(ctypes.Structure):
         ("dwExtraInfo", ctypes.POINTER(ctypes.wintypes.ULONG)),
     ]
 
-
 class HARDWAREINPUT(ctypes.Structure):
     _fields_ = [
         ("uMsg", wintypes.DWORD),
         ("wParamL", wintypes.WORD),
         ("wParamH", wintypes.DWORD)
     ]
-
 
 class INPUT(ctypes.Structure):
     class _Inner(ctypes.Union):

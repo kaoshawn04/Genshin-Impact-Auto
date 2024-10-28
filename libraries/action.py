@@ -1,94 +1,128 @@
 import sys
 import time
 
+
 sys.path.append("./libraries/windows_api")
 from windows_api.api import Win32api
 from windows_api.common import *
 
 
+MINIUM_INTERVAL = 0.001
+
+
+def adjust_mouse_speed(speed):
+    def inner(func):
+        def wrapper(*args, **kwargs):
+            original_speed = Win32api.get_mouse_speed()
+            Win32api.set_mouse_speed(speed)
+            func(*args, **kwargs)
+            Win32api.set_mouse_speed(original_speed)
+            
+        return wrapper
+    return inner
+
+
 class Mouse():
     @staticmethod
-    def _mouse_event(event, dx = 0, dy = 0, wheel = 0):
+    def _mouse_event(event, x = 0, y = 0, wheel = 0):
         Win32api.send_input(
             type=INPUT_MOUSE,
             event=event,
-            dx=dx,
-            dy=dy,
+            dx=x,
+            dy=y,
             mouseData=wheel
         )
-    
+
+
+    @staticmethod
+    @adjust_mouse_speed(10)
+    def move(x: int, y: int, mode: str = "rel", duration: float = 0, step: int = None):
+        mouse_x, mouse_y = Win32api.get_mouse_position()
+        delta_time = 0
+
+        if mode == "abs":
+            x -= mouse_x
+            y -= mouse_y
+            
+        if duration == 0:
+            Mouse._mouse_event(event=MOUSEEVENTF_MOVE, x=x, y=y)
+            return
+        
+        if step is None:                    
+            step = abs(max(x, y)) // 3
+
+        delta_time = duration / step
+        
+        if delta_time < MINIUM_INTERVAL:
+            delta_time = 0
+        
+        delta_x, delta_y = x // step, y // step
+        
+        x_decimal_count = step / (x % step) if x % step else 0
+        y_decimal_count = step / (y % step) if y % step else 0
+        
+        for i in range(step):
+            x = delta_x + (1 if x_decimal_count and i % x_decimal_count < 1 else 0)
+            y = delta_y + (1 if y_decimal_count and i % y_decimal_count < 1 else 0)
+
+            Mouse._mouse_event(event=MOUSEEVENTF_MOVE, x=x, y=y)
+            time.sleep(delta_time)
+
     
     @staticmethod
-    def move_to(x: int, y: int, mode: str = "abs"):
+    def drag(x: int, y: int, mode: str = "rel", duration: float = 1, step: int = None):
+        Mouse._mouse_event(event=MOUSEEVENTF_LEFTDOWN)
+        
         if mode == "rel":
-            Mouse._mouse_event(event=MOUSEEVENTF_MOVE, dx=x, dy=y)
-                
+            dx, dy = x // step, y // step
+            dt = duration / step
+            
+            for i in range(step):
+                Mouse._mouse_event(event=MOUSEEVENTF_MOVE, dx=dx, dy=dy)
+                time.sleep(dt)
+            
         elif mode == "abs":
             w, h = Win32api.get_screen_size()
-            Mouse._mouse_event(
-                event=MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE,
-                dx=int(x * 65535 / w),
-                dy=int(y * 65535 / h)
-            )
+            dx, dy = x * 65535 // h // step, y * 65535 // h // step
+            dt = duration / step
 
-    
-    @staticmethod
-    def drag_to(x: int, y: int, mode: str = "abs", duraton: float = None, steps: int = None):
-        if duraton is None:
-            duraton = 1
-            
-        if steps is None:
-            steps = 10
-            
-        if mode == "rel":
-            Mouse._mouse_event(event=MOUSEEVENTF_LEFTDOWN)
-            
-            for dx, dy in zip(range(0, x, x // steps), range(0, y, y // steps)):
-                print(dx, dy)
-                Mouse._mouse_event(event=MOUSEEVENTF_MOVE, dx=x, dy=y)
-                time.sleep(duraton / steps)
-        
-            Mouse._mouse_event(event=MOUSEEVENTF_LEFTUP)
-            
-        elif mode == "abs":
-            now_x, now_y = Win32api.get_cursor_position()
-            x, y = x - now_x, y - now_y
-
-            Mouse._mouse_event(event=MOUSEEVENTF_LEFTDOWN)
-
-            for dx, dy in zip(range(x, step=int(x / steps)), range(y, int(y / steps))):
-                Mouse._mouse_event(event=MOUSEEVENTF_MOVE, dx=x, dy=y)
-                time.sleep(duraton / steps)
+            for _ in range(step):
+                Mouse._mouse_event(
+                    event=MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE,
+                    dx=dx, 
+                    dy=dy
+                )
+                time.sleep(dt)
                 
-            Mouse._mouse_event(event=MOUSEEVENTF_LEFTUP)
+        Mouse._mouse_event(event=MOUSEEVENTF_LEFTUP)
             
         
     @staticmethod
-    def click(mode: str = "left", pause: float = None):
-        if pause is None:
-            pause = 0.01
+    def click(mode: str = "left", interval: float = None):
+        if interval is None:
+            interval = MINIUM_INTERVAL
             
         if mode == "left":
             Mouse._mouse_event(event=MOUSEEVENTF_LEFTDOWN)
-            time.sleep(pause)
+            time.sleep(interval)
             Mouse._mouse_event(event=MOUSEEVENTF_LEFTUP)
     
         elif mode == "right":
             Mouse._mouse_event(event=MOUSEEVENTF_RIGHTDOWN)
-            time.sleep(pause)
+            time.sleep(interval)
             Mouse._mouse_event(event=MOUSEEVENTF_RIGHTUP)
     
+    
     @staticmethod
-    def scroll(count: int, duraton: float = None, step: int = None):
-        if duraton is None:
-            duraton = 1
-            
+    def scroll(count: int, duration: float = 1, step: int = None):
         if step is None:
             step = 10
             
-        for delta in range(count, step=count // 10):
+        delta = count // step    
+        
+        for _ in range(step):
             Mouse._mouse_event(event=MOUSEEVENTF_WHEEL, wheel=delta)
-            time.sleep(duraton / step)
+            time.sleep(duration / step)
     
 
 class Keyboard():
@@ -104,14 +138,14 @@ class Keyboard():
 
 
     @staticmethod
-    def press(keys: str | list, pause: float = None):
-        if pause is None:  
-            pause = 0.01
+    def press(keys: str | list, interval: float = None):
+        if interval is None:  
+            interval = MINIUM_INTERVAL
 
         keys = [keys] if type(keys) != list else keys
         for key in keys:
             Keyboard._keyboard_event(event=KEYEVENTF_KEYDOWN, key=key)
-            time.sleep(pause)
+            time.sleep(interval)
             Keyboard._keyboard_event(event=KEYEVENTF_KEYUP, key=key)
 
 
@@ -132,8 +166,9 @@ class Keyboard():
 if __name__ == "__main__":
     import pyuac
     
-    #if not pyuac.isUserAdmin():
-    #    pyuac.runAsAdmin()
-        
-    time.sleep(5)
-    Mouse.drag_to(100, 100, "rel")
+    if not pyuac.isUserAdmin():
+        pyuac.runAsAdmin()
+
+    else:
+        time.sleep(3)
+        Mouse.move(500, 0, duration=1)
