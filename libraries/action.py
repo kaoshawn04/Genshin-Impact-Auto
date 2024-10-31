@@ -72,28 +72,7 @@ class Mouse():
     @staticmethod
     def drag(x: int, y: int, mode: str = "rel", duration: float = 1, step: int = None):
         Mouse._mouse_event(event=MOUSEEVENTF_LEFTDOWN)
-        
-        if mode == "rel":
-            dx, dy = x // step, y // step
-            dt = duration / step
-            
-            for i in range(step):
-                Mouse._mouse_event(event=MOUSEEVENTF_MOVE, dx=dx, dy=dy)
-                time.sleep(dt)
-            
-        elif mode == "abs":
-            w, h = Win32api.get_screen_size()
-            dx, dy = x * 65535 // h // step, y * 65535 // h // step
-            dt = duration / step
-
-            for _ in range(step):
-                Mouse._mouse_event(
-                    event=MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE,
-                    dx=dx, 
-                    dy=dy
-                )
-                time.sleep(dt)
-                
+        Mouse.move(x=x, y=y, mode=mode, duration=duration, step=step)        
         Mouse._mouse_event(event=MOUSEEVENTF_LEFTUP)
             
         
@@ -115,10 +94,14 @@ class Mouse():
     
     @staticmethod
     def scroll(count: int, duration: float = 1, step: int = None):
+        if duration == 0:
+            Mouse._mouse_event(event=MOUSEEVENTF_WHEEL, wheel=count)
+            return
+        
         if step is None:
-            step = 10
+            step = abs(count)
             
-        delta = count // step    
+        delta = count // step  
         
         for _ in range(step):
             Mouse._mouse_event(event=MOUSEEVENTF_WHEEL, wheel=delta)
@@ -163,12 +146,6 @@ class Keyboard():
             Keyboard._keyboard_event(event=KEYEVENTF_KEYUP, key=key)
             
             
+            
 if __name__ == "__main__":
-    import pyuac
-    
-    if not pyuac.isUserAdmin():
-        pyuac.runAsAdmin()
-
-    else:
-        time.sleep(3)
-        Mouse.move(500, 0, duration=1)
+    Mouse.move(500, 500, duration=1)

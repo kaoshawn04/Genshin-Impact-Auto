@@ -40,6 +40,12 @@ SPI_GETMOUSESPEED = 0x0070
 SPI_SETMOUSESPEED = 0x0071
 
 
+# screenshot
+DIB_RGB_COLORS = 0
+SRCCOPY = 0x00CC0020
+CAPTUREBLT = 0x40000000
+
+
 virtual_key_map = {
     "back": 0x08, "backspace": 0x08,
     "tab": 0x09,
@@ -126,4 +132,28 @@ class POINT(ctypes.Structure):
     _fields_ = [
         ("x", ctypes.c_long),
         ("y", ctypes.c_long)
+    ]
+    
+
+# screenshot
+class BITMAPINFOHEADER(ctypes.Structure):
+    _fields_ = [
+        ("biSize", wintypes.DWORD),
+        ("biWidth", wintypes.LONG),
+        ("biHeight", wintypes.LONG),
+        ("biPlanes", wintypes.WORD),
+        ("biBitCount", wintypes.WORD),
+        ("biCompression", wintypes.DWORD),
+        ("biSizeImage", wintypes.DWORD),
+        ("biXPelsPerMeter", wintypes.LONG),
+        ("biYPelsPerMeter", wintypes.LONG),
+        ("biClrUsed", wintypes.DWORD),
+        ("biClrImportant", wintypes.DWORD)
+    ]
+
+
+class BITMAPINFO(ctypes.Structure):
+    _fields_ = [
+        ("bmiHeader", BITMAPINFOHEADER),
+        ("bmiColors", wintypes.DWORD * 3)
     ]
