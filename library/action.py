@@ -1,8 +1,7 @@
 import time
 
-
-from libraries.windows_api.api import Win32api
-from libraries.windows_api.common import *
+from windows_api.api import Win32api
+from windows_api.common import *
 
 
 MINIUM_INTERVAL = 0.001

@@ -4,7 +4,7 @@ import zlib
 import ctypes
 import struct
 
-from libraries.windows_api.common import *
+from .common import *
 
 
 crc32 = zlib.crc32
