@@ -1,16 +1,14 @@
 import cv2
+import sys
+import time
 
 from ultralytics import YOLO
 
+sys.path.append("./libraries/windows_api")
+from windows_api.api import Win32api
+
 
 model = YOLO("C:/Users/kaosh/OneDrive/桌面/Genshin-Impact-Auto/assets/yolo model/best.pt")
-#model.train(
-#        data="C:/Users/kaosh/Downloads/fish.v7i.yolov11/data.yaml",
-#        mode="detect",
-#        epochs=25,
-#        imgsz=640,
-#        device="cpu"
-#    )
 
 
 def detect(image_path):
@@ -19,9 +17,14 @@ def detect(image_path):
     
     result = model.predict(source=image, show=True, save=True)
     
-    #print(result)
-    #for r in result:
-    #    print(r.boxes.data)
+    print(result)
+    for r in result:
+        print(r.boxes.data)
     
-    
-detect("C:/Users/kaosh/OneDrive/桌面/新增資料夾/20241006234840.png")
+
+if __name__ == "__main__":
+    window = Win32api.find_window(window_name="原神")
+    Win32api.set_foreground_window(window)
+    time.sleep(1)
+    screenshot = Win32api.screenshot(window)
+    detect(screenshot)

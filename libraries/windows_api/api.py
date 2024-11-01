@@ -199,7 +199,7 @@ class Win32api():
         iend[3] = struct.pack(">I", crc32(iend[1]) & 0xFFFFFFFF)
         iend[0] = struct.pack(">I", len(iend[2]))
         
-        filename = f"assets/pic/{int(time.time())}.png"
+        filename = f"assets/screenshot/{int(time.time())}.png"
         
         with open(filename, "wb") as fileh:
             fileh.write(magic)
@@ -211,10 +211,3 @@ class Win32api():
             os.fsync(fileh.fileno())
             
         return filename
-        
-        
-if __name__ == "__main__":
-    window = Win32api.find_window(window_name="原神")
-    Win32api.set_foreground_window(window)
-    time.sleep(1)
-    Win32api.screenshot(window)
