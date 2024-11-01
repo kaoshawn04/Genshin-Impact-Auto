@@ -4,7 +4,8 @@ import time
 
 from ultralytics import YOLO
 
-sys.path.append("./libraries/windows_api")
+sys.path.append("C:/Users/kaosh/OneDrive/桌面/Genshin-Impact-Auto/libraries/windows_api")
+print(sys.path)
 from windows_api.api import Win32api
 
 
