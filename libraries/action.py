@@ -1,10 +1,8 @@
-import sys
 import time
 
 
-sys.path.append("./libraries/windows_api")
-from windows_api.api import Win32api
-from windows_api.common import *
+from libraries.windows_api.api import Win32api
+from libraries.windows_api.common import *
 
 
 MINIUM_INTERVAL = 0.001
@@ -144,8 +142,3 @@ class Keyboard():
         keys = [keys] if type(keys) != list else keys
         for key in keys:
             Keyboard._keyboard_event(event=KEYEVENTF_KEYUP, key=key)
-            
-            
-            
-if __name__ == "__main__":
-    Mouse.move(500, 500, duration=1)

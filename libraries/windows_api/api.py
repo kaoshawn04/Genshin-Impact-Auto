@@ -1,12 +1,10 @@
 import os
-import sys
 import time
 import zlib
 import ctypes
 import struct
 
-sys.path.append("./libraries/windows_api/common")
-from common import *
+from libraries.windows_api.common import *
 
 
 crc32 = zlib.crc32

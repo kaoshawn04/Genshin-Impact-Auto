@@ -4,9 +4,7 @@ import time
 
 from ultralytics import YOLO
 
-sys.path.append("C:/Users/kaosh/OneDrive/桌面/Genshin-Impact-Auto/libraries/windows_api")
-print(sys.path)
-from windows_api.api import Win32api
+from libraries.windows_api.api import Win32api
 
 
 model = YOLO("C:/Users/kaosh/OneDrive/桌面/Genshin-Impact-Auto/assets/yolo model/best.pt")
@@ -18,7 +16,6 @@ def detect(image_path):
     
     result = model.predict(source=image, show=True, save=True)
     
-    print(result)
     for r in result:
         print(r.boxes.data)
     
@@ -27,5 +24,7 @@ if __name__ == "__main__":
     window = Win32api.find_window(window_name="原神")
     Win32api.set_foreground_window(window)
     time.sleep(1)
+    s = time.time()
     screenshot = Win32api.screenshot(window)
     detect(screenshot)
+    print(time.time() - s)
