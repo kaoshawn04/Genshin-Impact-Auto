@@ -15,6 +15,7 @@ class Auto_fish():
             "a"
         ]
     
+    
     def detect_fish(self, image_path):
         fishes = []
         
@@ -35,6 +36,13 @@ class Auto_fish():
             
         return fishes
             
+            
+    def throw_rod(self, x, y):
+        title_bar_height = 56
+        border_width, border_height = Win32api.get_window_border_size().values()
+        
+        
+        Mouse.drag()
 
 if __name__ == "__main__":
     Auto_fish().detect_fish("assets/screenshot/1730449582.png")

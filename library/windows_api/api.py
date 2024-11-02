@@ -4,7 +4,7 @@ import zlib
 import ctypes
 import struct
 
-from .common import *
+from common import *
 
 
 crc32 = zlib.crc32
@@ -42,6 +42,7 @@ class Win32api():
         
     @staticmethod
     def get_window_size(hwnd: int) -> dict:
+        # without border
         rect = ctypes.wintypes.RECT()
         ctypes.windll.dwmapi.DwmGetWindowAttribute(
             hwnd,
@@ -49,21 +50,23 @@ class Win32api():
             ctypes.byref(rect),
             ctypes.sizeof(rect)
         )
+        border_width = user32.GetSystemMetrics(SM_CXFRAME)
+        border_height = user32.GetSystemMetrics(SM_CYFRAME)
         
         return {
-                "left": rect.left,
-                "top": rect.top, 
-                "width": rect.right - rect.left, # -(rect.left + 4)
-                "height": rect.bottom - rect.top # - (rect.top + 60)
-            }
-        
+            "left": rect.left,
+            "top": rect.top, 
+            "width": rect.right - rect.left - border_width,
+            "height": rect.bottom - rect.top - border_height
+        }
+    
         
     @staticmethod
-    def get_screen_size() -> tuple:
-        w = user32.GetSystemMetrics(0)
-        h = user32.GetSystemMetrics(1)
-        
-        return (w, h)     
+    def get_screen_size() -> dict:
+        return {
+            "width": user32.GetSystemMetrics(SM_CXSCREEN),
+            "height": user32.GetSystemMetrics(SM_CYSCREEN)
+        }
 
 
     @staticmethod

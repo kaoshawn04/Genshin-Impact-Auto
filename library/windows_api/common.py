@@ -27,10 +27,17 @@ KEYEVENTF_UNICODE = 0x0004
 
 
 # get window size
+SM_CXFRAME = 32
+SM_CYFRAME = 33
 DWMWA_EXTENDED_FRAME_BOUNDS = 9
 
 
-# get cursor speed
+# get screen size
+SM_CXSCREEN = 0
+SM_CYSCREEN = 1
+
+
+# get mouse speed
 SPIF_UPDATEINIFILE = 0x01
 SPIF_SENDCHANGE = 0x02
 SPI_GETMOUSESPEED = 0x0070
@@ -86,6 +93,14 @@ virtual_key_map = {
 }
 
 
+# get mouse position
+class POINT(ctypes.Structure):
+    _fields_ = [
+        ("x", ctypes.c_long),
+        ("y", ctypes.c_long)
+    ]
+
+
 # send input
 class MOUSEINPUT(ctypes.Structure):
     _fields_ = [
@@ -124,14 +139,6 @@ class INPUT(ctypes.Structure):
     _fields_ = [
         ("type", wintypes.DWORD),
         ("input", _Inner),
-    ]
-    
-
-# get cursor position
-class POINT(ctypes.Structure):
-    _fields_ = [
-        ("x", ctypes.c_long),
-        ("y", ctypes.c_long)
     ]
     
 
