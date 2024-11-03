@@ -1,11 +1,16 @@
 import os
+import sys
 import time
 import zlib
 import ctypes
 import struct
 
-from common import *
-
+try:
+    from common import *
+    
+except ModuleNotFoundError:
+    pass
+    
 
 crc32 = zlib.crc32
 user32 = ctypes.WinDLL("user32")
@@ -50,12 +55,12 @@ class Win32api():
             ctypes.byref(rect),
             ctypes.sizeof(rect)
         )
-        border_width = user32.GetSystemMetrics(SM_CXFRAME)
-        border_height = user32.GetSystemMetrics(SM_CYFRAME)
+        border_width = user32.GetSystemMetrics(SM_CXFRAME) // 2
+        border_height = user32.GetSystemMetrics(SM_CYFRAME) // 2
         
         return {
-            "left": rect.left,
-            "top": rect.top, 
+            "left": rect.left + border_width,
+            "top": rect.top + border_height, 
             "width": rect.right - rect.left - border_width,
             "height": rect.bottom - rect.top - border_height
         }
@@ -150,6 +155,7 @@ class Win32api():
         # https://github.com/BoboTiG/python-mss
         
         x, y, w, h = Win32api.get_window_size(hwnd).values()
+        y -= 56
         
         srcdc = user32.GetWindowDC(0)
         memdc = gdi32.CreateCompatibleDC(srcdc)
@@ -212,3 +218,7 @@ class Win32api():
             os.fsync(fileh.fileno())
             
         return filename
+    
+    
+if __name__ == "__main__":
+    Win32api.get_screen_size()
