@@ -2,7 +2,7 @@ import time
 
 from ultralytics import YOLO
 
-from action import Mouse, Keyboard
+from library.general.action import Mouse, Keyboard
 from windows_api.api import Win32api
 
 

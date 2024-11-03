@@ -1,7 +1,20 @@
+import sys
 import time
+import pathlib
 
-from windows_api.api import Win32api
-from windows_api.common import *
+from ..windows_api.api import Win32api
+from ..windows_api.common import *
+#try:
+#    from ..windows_api.api import Win32api
+#    from ..windows_api.common import *
+
+#except (ModuleNotFoundError, ImportError):
+#    dir_path = pathlib.Path(__file__).parent.parent
+#    sys.path.append(str(dir_path / "windows_api"))
+#    print(sys.path)
+    
+#    from windows_api.api import Win32api
+#    from windows_api.common import *
 
 
 MINIUM_INTERVAL = 0.001
@@ -141,3 +154,7 @@ class Keyboard():
         keys = [keys] if type(keys) != list else keys
         for key in keys:
             Keyboard._keyboard_event(event=KEYEVENTF_KEYUP, key=key)
+            
+            
+if __name__ == "__main__":
+    print(Win32api.get_screen_size())

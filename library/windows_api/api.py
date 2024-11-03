@@ -4,12 +4,16 @@ import time
 import zlib
 import ctypes
 import struct
+import pathlib
 
 try:
     from common import *
     
-except ModuleNotFoundError:
-    pass
+except (ModuleNotFoundError, ImportError):
+    dir_path = pathlib.Path(__file__).parent
+    sys.path.append(str(dir_path / "common.py"))
+
+    from common import *
     
 
 crc32 = zlib.crc32
@@ -218,7 +222,3 @@ class Win32api():
             os.fsync(fileh.fileno())
             
         return filename
-    
-    
-if __name__ == "__main__":
-    Win32api.get_screen_size()
