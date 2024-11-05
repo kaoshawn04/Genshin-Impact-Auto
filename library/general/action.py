@@ -1,21 +1,18 @@
+import os
 import sys
 import time
-import pathlib
 
-from ..windows_api.api import Win32api
-from ..windows_api.common import *
-#try:
-#    from ..windows_api.api import Win32api
-#    from ..windows_api.common import *
-
-#except (ModuleNotFoundError, ImportError):
-#    dir_path = pathlib.Path(__file__).parent.parent
-#    sys.path.append(str(dir_path / "windows_api"))
-#    print(sys.path)
+try:
+    from library.windows_api.api import Win32api
+    from library.windows_api.common import *
     
-#    from windows_api.api import Win32api
-#    from windows_api.common import *
-
+except (ImportError, ModuleNotFoundError):
+    dir_path = (os.path.realpath(__file__)).rsplit("\\library", 1)[0]
+    sys.path.append(dir_path)
+    
+    from library.windows_api.api import Win32api
+    from library.windows_api.common import *
+    
 
 MINIUM_INTERVAL = 0.001
 
@@ -72,8 +69,17 @@ class Mouse():
         y_decimal_count = step / (y % step) if y % step else 0
         
         for i in range(step):
-            x = delta_x + (1 if x_decimal_count and i % x_decimal_count < 1 else 0)
-            y = delta_y + (1 if y_decimal_count and i % y_decimal_count < 1 else 0)
+            if x_decimal_count != 0 and i % x_decimal_count < 1:
+                x = delta_x + 1
+            
+            else:
+                x = delta_x
+                    
+            if y_decimal_count != 0 and i % y_decimal_count < 1:
+                y = delta_y + 1
+            
+            else:
+                y = delta_y
 
             Mouse._mouse_event(event=MOUSEEVENTF_MOVE, x=x, y=y)
             time.sleep(delta_time)
@@ -87,10 +93,7 @@ class Mouse():
             
         
     @staticmethod
-    def click(mode: str = "left", interval: float = None):
-        if interval is None:
-            interval = MINIUM_INTERVAL
-            
+    def click(mode: str = "left", interval: float = MINIUM_INTERVAL):
         if mode == "left":
             Mouse._mouse_event(event=MOUSEEVENTF_LEFTDOWN)
             time.sleep(interval)
@@ -131,10 +134,7 @@ class Keyboard():
 
 
     @staticmethod
-    def press(keys: str | list, interval: float = None):
-        if interval is None:  
-            interval = MINIUM_INTERVAL
-
+    def press(keys: str | list, interval: float = MINIUM_INTERVAL):
         keys = [keys] if type(keys) != list else keys
         for key in keys:
             Keyboard._keyboard_event(event=KEYEVENTF_KEYDOWN, key=key)
@@ -154,7 +154,3 @@ class Keyboard():
         keys = [keys] if type(keys) != list else keys
         for key in keys:
             Keyboard._keyboard_event(event=KEYEVENTF_KEYUP, key=key)
-            
-            
-if __name__ == "__main__":
-    print(Win32api.get_screen_size())

@@ -1,9 +1,19 @@
+import os
+import sys
 import time
 
 from ultralytics import YOLO
 
-from library.general.action import Mouse, Keyboard
-from windows_api.api import Win32api
+try:
+    from library.general.action import Mouse, Keyboard
+    from library.windows_api.api import Win32api
+
+except (ImportError, ModuleNotFoundError):
+    dir_path = (os.path.realpath(__file__)).rsplit("\\library", 1)[0]
+    sys.path.append(dir_path)
+    
+    from library.general.action import Mouse, Keyboard
+    from library.windows_api.api import Win32api
 
 
 class Auto_fish():
@@ -50,6 +60,7 @@ class Auto_fish():
         Mouse.drag(int(x), int(y), "abs")
     
 
+"""
 if __name__ == "__main__":
     import pyuac
     if not pyuac.isUserAdmin():
@@ -66,3 +77,5 @@ if __name__ == "__main__":
     print("tc", target["center_x"], target["center_y"])
     fishing.throw_rod(target["center_x"], target["center_y"])
     print("check 2")
+"""
+fishing = Auto_fish(1)

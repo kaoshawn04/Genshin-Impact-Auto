@@ -4,16 +4,15 @@ import time
 import zlib
 import ctypes
 import struct
-import pathlib
 
 try:
-    from common import *
+    from library.windows_api.common import *
     
-except (ModuleNotFoundError, ImportError):
-    dir_path = pathlib.Path(__file__).parent
-    sys.path.append(str(dir_path / "common.py"))
-
-    from common import *
+except (ImportError, ModuleNotFoundError):
+    dir_path = (os.path.realpath(__file__)).rsplit("\\library", 1)[0]
+    sys.path.append(dir_path)
+    
+    from library.windows_api.common import *
     
 
 crc32 = zlib.crc32
@@ -32,7 +31,7 @@ class Win32api():
             class_name:
                 If this is None, it will find any window
                 whose title matches the window_name.
-
+  
             window_name:
                 If this is None, it will find all window.
         """
