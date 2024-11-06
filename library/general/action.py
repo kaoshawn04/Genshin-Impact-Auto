@@ -154,3 +154,29 @@ class Keyboard():
         keys = [keys] if type(keys) != list else keys
         for key in keys:
             Keyboard._keyboard_event(event=KEYEVENTF_KEYUP, key=key)
+            
+
+if __name__ == "__main__":
+    import pyuac
+    
+    if not pyuac.isUserAdmin():
+        pyuac.runAsAdmin()
+        
+    else:
+        time.sleep(3)
+        window = Win32api.find_window(window_name="原神")
+        Win32api.set_foreground_window(window)
+        time.sleep(3)
+        
+        Mouse.move(640 * 4, 0, duration=3)
+        #time.sleep(1)
+        #Mouse.move(1280, 0, duration=3)
+        
+        
+        
+# 水平視角靈敏度, dx == 640, dx == 1280, dx == 1920, dx == 2560
+# 5: 110, 225, 335, 450
+# 4: 90, 185, 280, 375
+# 3: 65, 125, 185, 250
+# 2: 30, 65, 90, 125
+# 1: 15, 30, 45, 60

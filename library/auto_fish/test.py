@@ -33,7 +33,7 @@ class Auto_fish():
             source=image_path,
             conf=self.confidence_threshold,
             verbose=False,
-            save=True
+            save=False
         )
         
         for r in predict_result[0].boxes.data.tolist():
@@ -60,22 +60,17 @@ class Auto_fish():
         Mouse.drag(int(x), int(y), "abs")
     
 
-"""
 if __name__ == "__main__":
     import pyuac
     if not pyuac.isUserAdmin():
         pyuac.runAsAdmin()
         
-    window = Win32api.find_window(window_name="原神")
-    Win32api.set_foreground_window(window)
+    else:
+        window = Win32api.find_window(window_name="原神")
+        Win32api.set_foreground_window(window)
 
-    fishing = Auto_fish(window)
-    time.sleep(2)
-    print("checks")
-    fish = fishing.detect_fish(Win32api.screenshot(window))
-    target = fish[0]
-    print("tc", target["center_x"], target["center_y"])
-    fishing.throw_rod(target["center_x"], target["center_y"])
-    print("check 2")
-"""
-fishing = Auto_fish(1)
+        fishing = Auto_fish(window)
+        time.sleep(2)
+        fish = fishing.detect_fish(Win32api.screenshot(window))
+        target = fish[0]
+        fishing.throw_rod(target["center_x"], target["center_y"])
