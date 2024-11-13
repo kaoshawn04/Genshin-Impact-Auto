@@ -5,7 +5,7 @@ import time
 try:
     from library.windows_api.api import Win32api
     from library.windows_api.common import *
-    
+
 except (ImportError, ModuleNotFoundError):
     dir_path = (os.path.realpath(__file__)).rsplit("\\library", 1)[0]
     sys.path.append(dir_path)
