@@ -9,10 +9,11 @@ try:
 except (ImportError, ModuleNotFoundError):
     dir_path = (os.path.realpath(__file__)).rsplit("\\library", 1)[0]
     sys.path.append(dir_path)
+    print(sys.path)
     
     from library.windows_api.api import Win32api
     from library.windows_api.common import *
-    
+
 
 MINIUM_INTERVAL = 0.001
 
@@ -154,18 +155,3 @@ class Keyboard():
         keys = [keys] if type(keys) != list else keys
         for key in keys:
             Keyboard._keyboard_event(event=KEYEVENTF_KEYUP, key=key)
-            
-
-if __name__ == "__main__":
-    import pyuac
-    
-    if not pyuac.isUserAdmin():
-        pyuac.runAsAdmin()
-        
-    else:
-        time.sleep(3)
-        window = Win32api.find_window(window_name="原神")
-        Win32api.set_foreground_window(window)
-        time.sleep(3)
-        
-        Mouse.move(640 * 4, 0, duration=3)
