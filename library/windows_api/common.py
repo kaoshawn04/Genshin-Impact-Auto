@@ -93,6 +93,34 @@ virtual_key_map = {
 }
 
 
+# get screen size
+class DEVMODEA(ctypes.Structure):
+    _fields_ = [
+        ('dmDeviceName', ctypes.c_char * 32),
+        ('dmSpecVersion', wintypes.WORD),
+        ('dmDriverVersion', wintypes.WORD),
+        ('dmSize', wintypes.WORD),
+        ('dmDriverExtra', wintypes.WORD),
+        ('dmFields', wintypes.DWORD),
+        ('dmPositionX', wintypes.LONG),
+        ('dmPositionY', wintypes.LONG),
+        ('dmDisplayOrientation', wintypes.DWORD),
+        ('dmDisplayFixedOutput', wintypes.DWORD),
+        ('dmColor', wintypes.SHORT),
+        ('dmDuplex', wintypes.SHORT),
+        ('dmYResolution', wintypes.SHORT),
+        ('dmTTOption', wintypes.SHORT),
+        ('dmCollate', wintypes.SHORT),
+        ('dmFormName', ctypes.c_char * 32),
+        ('dmLogPixels', wintypes.WORD),
+        ('dmBitsPerPel', wintypes.DWORD),
+        ('dmPelsWidth', wintypes.DWORD),
+        ('dmPelsHeight', wintypes.DWORD),
+        ('dmDisplayFlags', wintypes.DWORD),
+        ('dmDisplayFrequency', wintypes.DWORD)
+    ]
+
+
 # get mouse position
 class POINT(ctypes.Structure):
     _fields_ = [

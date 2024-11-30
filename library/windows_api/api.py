@@ -7,26 +7,26 @@ import struct
 
 try:
     from library.windows_api.common import *
-    
+
 except (ImportError, ModuleNotFoundError):
     dir_path = (os.path.realpath(__file__)).rsplit("\\library", 1)[0]
     sys.path.append(dir_path)
     
     from library.windows_api.common import *
-    
+
 
 crc32 = zlib.crc32
 user32 = ctypes.WinDLL("user32")
 gdi32 = ctypes.WinDLL('gdi32')
 
 
-class Win32api():
+class Windows_api():
     @staticmethod
     def find_window(class_name: str = None, window_name: str = None) -> int:
         """
         Find window via class and window name,
         return the handle of the window.
-        
+
         Args:
             class_name:
                 If this is None, it will find any window
@@ -50,7 +50,6 @@ class Win32api():
         
     @staticmethod
     def get_window_size(hwnd: int) -> dict:
-        # without border
         rect = ctypes.wintypes.RECT()
         ctypes.windll.dwmapi.DwmGetWindowAttribute(
             hwnd,
@@ -58,23 +57,18 @@ class Win32api():
             ctypes.byref(rect),
             ctypes.sizeof(rect)
         )
-        border_width = user32.GetSystemMetrics(SM_CXFRAME) // 2
-        border_height = user32.GetSystemMetrics(SM_CYFRAME) // 2
         
-        return {
-            "left": rect.left + border_width,
-            "top": rect.top + border_height, 
-            "width": rect.right - rect.left - border_width,
-            "height": rect.bottom - rect.top - border_height
-        }
+        return (rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top)
     
         
     @staticmethod
     def get_screen_size() -> dict:
-        return {
-            "width": user32.GetSystemMetrics(SM_CXSCREEN),
-            "height": user32.GetSystemMetrics(SM_CYSCREEN)
-        }
+        devmode = DEVMODEA()
+        devmode.dmSize = ctypes.sizeof(DEVMODEA)
+        
+        user32.EnumDisplaySettingsA(None, -1, ctypes.byref(devmode))
+        
+        return (devmode.dmPelsWidth, devmode.dmPelsHeight)
 
 
     @staticmethod
@@ -157,8 +151,7 @@ class Win32api():
     def screenshot(hwnd: int) -> str:
         # https://github.com/BoboTiG/python-mss
         
-        x, y, w, h = Win32api.get_window_size(hwnd).values()
-        y -= 56
+        x, y, w, h = Windows_api.get_window_size(hwnd)
         
         srcdc = user32.GetWindowDC(0)
         memdc = gdi32.CreateCompatibleDC(srcdc)
@@ -209,7 +202,7 @@ class Win32api():
         iend[3] = struct.pack(">I", crc32(iend[1]) & 0xFFFFFFFF)
         iend[0] = struct.pack(">I", len(iend[2]))
         
-        filename = f"assets/screenshot/{int(time.time())}.png"
+        filename = f"screenshot/{int(time.time_ns())}.png"
         
         with open(filename, "wb") as fileh:
             fileh.write(magic)

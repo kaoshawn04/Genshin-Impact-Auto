@@ -3,15 +3,14 @@ import sys
 import time
 
 try:
-    from library.windows_api.api import Win32api
+    from library.windows_api.api import Windows_api
     from library.windows_api.common import *
 
 except (ImportError, ModuleNotFoundError):
     dir_path = (os.path.realpath(__file__)).rsplit("\\library", 1)[0]
     sys.path.append(dir_path)
-    print(sys.path)
     
-    from library.windows_api.api import Win32api
+    from library.windows_api.api import Windows_api
     from library.windows_api.common import *
 
 
@@ -21,10 +20,10 @@ MINIUM_INTERVAL = 0.001
 def adjust_mouse_speed(speed):
     def inner(func):
         def wrapper(*args, **kwargs):
-            original_speed = Win32api.get_mouse_speed()
-            Win32api.set_mouse_speed(speed)
+            original_speed = Windows_api.get_mouse_speed()
+            Windows_api.set_mouse_speed(speed)
             func(*args, **kwargs)
-            Win32api.set_mouse_speed(original_speed)
+            Windows_api.set_mouse_speed(original_speed)
             
         return wrapper
     return inner
@@ -33,7 +32,7 @@ def adjust_mouse_speed(speed):
 class Mouse():
     @staticmethod
     def _mouse_event(event, x = 0, y = 0, wheel = 0):
-        Win32api.send_input(
+        Windows_api.send_input(
             type=INPUT_MOUSE,
             event=event,
             dx=x,
@@ -45,7 +44,7 @@ class Mouse():
     @staticmethod
     @adjust_mouse_speed(10)
     def move(x: int, y: int, mode: str = "rel", duration: float = 0, step: int = None):
-        mouse_x, mouse_y = Win32api.get_mouse_position()
+        mouse_x, mouse_y = Windows_api.get_mouse_position()
         delta_time = 0
 
         if mode == "abs":
@@ -104,6 +103,24 @@ class Mouse():
             Mouse._mouse_event(event=MOUSEEVENTF_RIGHTDOWN)
             time.sleep(interval)
             Mouse._mouse_event(event=MOUSEEVENTF_RIGHTUP)
+            
+            
+    @staticmethod
+    def clickdown(mode: str = "left"):
+        if mode == "left":
+            Mouse._mouse_event(event=MOUSEEVENTF_LEFTDOWN)
+            
+        elif mode == "right":
+            Mouse._mouse_event(event=MOUSEEVENTF_RIGHTDOWN)
+            
+    
+    @staticmethod
+    def clickup(mode: str = "left"):
+        if mode == "left":
+            Mouse._mouse_event(event=MOUSEEVENTF_LEFTUP)
+            
+        elif mode == "right":
+            Mouse._mouse_event(event=MOUSEEVENTF_RIGHTUP)        
     
     
     @staticmethod
@@ -131,7 +148,7 @@ class Keyboard():
         else:
             virtual_key = ord(key.upper())
             
-        Win32api.send_input(type=INPUT_KEYBOARD, event=event, virtual_key=virtual_key)
+        Windows_api.send_input(type=INPUT_KEYBOARD, event=event, virtual_key=virtual_key)
 
 
     @staticmethod

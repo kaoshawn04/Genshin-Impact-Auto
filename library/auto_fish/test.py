@@ -1,76 +1,132 @@
 import os
 import sys
 import time
+import traceback
+
+import numpy as np
 
 from ultralytics import YOLO
 
 try:
     from library.general.action import Mouse, Keyboard
-    from library.windows_api.api import Win32api
+    from library.windows_api.api import Windows_api
 
 except (ImportError, ModuleNotFoundError):
     dir_path = (os.path.realpath(__file__)).rsplit("\\library", 1)[0]
     sys.path.append(dir_path)
     
     from library.general.action import Mouse, Keyboard
-    from library.windows_api.api import Win32api
+    from library.windows_api.api import Windows_api
 
 
 class Auto_fish():
     def __init__(self, hwnd, confidence_threshold = 0.8):
         self.hwnd = hwnd
         self.confidence_threshold = confidence_threshold
-        self.model = YOLO("C:/Users/kaosh/OneDrive/桌面/Genshin-Impact-Auto/assets/yolo model/best.pt")
-        self.fishes_name = [
-            "a"
+        self.fish_class_name = [
+            "Aizen Medaka",
+            "Akai Maou",
+            "Bitter Pufferfish",
+            "Crystalfish",
+            "Dawn-catch-er",
+            "Medaka",
+            "Pufferfish",
+            "Tea-Colored Shirakodai",
+            "Venomspine Fish"
         ]
+        
+        self.model = YOLO("C:/Users/kaosh/OneDrive/桌面/Genshin-Impact-Auto/assets/yolo model/best.pt")
+        self.model.track(persist=True)
     
     
-    def detect_fish(self, image_path):
-        fish = []
+    def detect_fish(self, target_class_name = None, target_id = None):
+        predict_result = [None]
+        timer = 0
+        while predict_result[0] is None and timer < 5:
+            timer += 1
+            predict_result = self.model.track(
+                Windows_api.screenshot(self.hwnd),
+                verbose=False,
+                persist=True,
+                save=False,
+                conf=0.7
+            )
         
-        predict_result = self.model.predict(
-            source=image_path,
-            conf=self.confidence_threshold,
-            verbose=False,
-            save=False
-        )
+        # if predict_result[0] is None:
+        #     self.detect_fish(target_class_name, target_id)
         
-        for r in predict_result[0].boxes.data.tolist():
-            x1, y1, x2, y2, confidence, name = r
-            print("xy", x1, x2, y1, y2)
-            fish.append({
-                #"name": self.fishes_name[name],
-                "center_x": (x1 + x2) / 2,
-                "center_y": (y1 + y2) / 2
-            })
+        if target_class_name is None and target_id is None:
+            return [
+                {
+                    "id": int(box.id),
+                    "class_name": self.fish_class_name[int(box.cls)],
+                    "size": tuple(box.xywh.tolist()[0])
+                }
+                for box in predict_result[0].boxes
+            ]   
+        
+        elif target_class_name is not None:
+            box = [
+                box 
+                for box in predict_result[0].boxes 
+                if self.fish_class_name[int(box.cls)] in target_class_name
+            ]
             
-        return fish
-            
-            
-    def throw_rod(self, x, y):
-        title_bar_height = 56
-        window_x, window_y, _, _ = Win32api.get_window_size(self.hwnd).values()
-        print(window_x, window_y)
+        elif target_id is not None:
+           box = [box for box in predict_result[0].boxes if int(box.id) == target_id]
+           
+        if len(box) == 0:
+            self.detect_fish(target_class_name, target_id)
         
-        x += window_x
-        y += window_y
-        print(x, y)
-        
-        Mouse.drag(int(x), int(y), "abs")
+        else:
+            return {
+                "id": int(box[0].id),
+                "class_name": self.fish_class_name[int(box[0].cls)],
+                "size": tuple(box[0].xywh.tolist()[0])
+            }    
+            
     
+    def throw_rod(self, want_fish_name):
+        try:
+            x_unit_movement = 20
+            y_unit_movement = 20
+            target = self.detect_fish(target_class_name=want_fish_name)
+            window_size = Windows_api.get_window_size(self.hwnd)
+            
+            Mouse.clickdown()
+            
+            while abs(target["size"][0] - (window_size[2] // 2)) >= 50:
+                #x_unit_movement *= (target["size"][0] - (window_size[2] // 2)) / 100
+                #y_unit_movement *= (target["size"][1] - (window_size[3] // 2)) / 100
+                x_unit_movement *= 1 if target["size"][0] - (window_size[2] // 2) > 0 else -1
+                y_unit_movement *= 1 if target["size"][1] - (window_size[3] // 2) > 0 else -1
+                print(int(abs(target["size"][0] - (window_size[2] // 2))), int(abs(target["size"][1] - (window_size[3] // 2))))
+                
+                Mouse.move(int(x_unit_movement), int(y_unit_movement))
+                
+                target = self.detect_fish(target_id=target["id"])
+                
+            Mouse.clickup()
+            
+            time.sleep(50)
 
+        except Exception:
+            print(traceback.format_exc())
+            time.sleep(50)
+            
+        
+    def main(self):
+        want_fish_name = ["Pufferfish", "Bitter Pufferfish"]
+        self.throw_rod(want_fish_name)
+        
+        
 if __name__ == "__main__":
     import pyuac
+    
     if not pyuac.isUserAdmin():
         pyuac.runAsAdmin()
         
     else:
-        window = Win32api.find_window(window_name="原神")
-        Win32api.set_foreground_window(window)
-
-        fishing = Auto_fish(window)
-        time.sleep(2)
-        fish = fishing.detect_fish(Win32api.screenshot(window))
-        target = fish[0]
-        fishing.throw_rod(target["center_x"], target["center_y"])
+        af = Auto_fish(Windows_api.find_window(window_name="原神"))
+        time.sleep(3)
+        af.main()
