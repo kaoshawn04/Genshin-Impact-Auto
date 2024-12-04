@@ -3,8 +3,6 @@ import sys
 import time
 import traceback
 
-import numpy as np
-
 from ultralytics import YOLO
 
 try:
@@ -22,69 +20,37 @@ except (ImportError, ModuleNotFoundError):
 class Auto_fish():
     def __init__(self, hwnd, confidence_threshold = 0.8):
         self.hwnd = hwnd
+        self.hwnd_size = Windows_api.get_window_size(self.hwnd)
+        
         self.confidence_threshold = confidence_threshold
-        self.fish_class_name = [
-            "Aizen Medaka",
-            "Akai Maou",
-            "Bitter Pufferfish",
-            "Crystalfish",
-            "Dawn-catch-er",
-            "Medaka",
-            "Pufferfish",
-            "Tea-Colored Shirakodai",
-            "Venomspine Fish"
-        ]
         
-        self.model = YOLO("C:/Users/kaosh/OneDrive/桌面/Genshin-Impact-Auto/assets/yolo model/best.pt")
-        self.model.track(persist=True)
+        self.model = YOLO("C:/Users/kaosh/OneDrive/桌面/GENSHIN-IMPACT-AUTO/assets/yolo model/best.pt")
+        self.model.track(persist=False)
     
     
-    def detect_fish(self, target_class_name = None, target_id = None):
-        predict_result = [None]
-        timer = 0
-        while predict_result[0] is None and timer < 5:
-            timer += 1
-            predict_result = self.model.track(
-                Windows_api.screenshot(self.hwnd),
-                verbose=False,
-                persist=True,
-                save=False,
-                conf=0.7
-            )
+    def detect_fish(self, source_path = None, target_name = None, target_id = None):
+        if source_path is None:
+            source_path = Windows_api.screenshot(self.hwnd)
         
-        # if predict_result[0] is None:
-        #     self.detect_fish(target_class_name, target_id)
+        counter = 0
         
-        if target_class_name is None and target_id is None:
-            return [
-                {
-                    "id": int(box.id),
-                    "class_name": self.fish_class_name[int(box.cls)],
-                    "size": tuple(box.xywh.tolist()[0])
-                }
-                for box in predict_result[0].boxes
-            ]   
+        predict_result = self.model.track(
+            source=source_path,
+            conf=self.confidence_threshold,
+            verbose=False,
+            persist=True,
+            save=False
+        )
         
-        elif target_class_name is not None:
-            box = [
-                box 
-                for box in predict_result[0].boxes 
-                if self.fish_class_name[int(box.cls)] in target_class_name
-            ]
-            
-        elif target_id is not None:
-           box = [box for box in predict_result[0].boxes if int(box.id) == target_id]
-           
-        if len(box) == 0:
-            self.detect_fish(target_class_name, target_id)
-        
-        else:
-            return {
-                "id": int(box[0].id),
-                "class_name": self.fish_class_name[int(box[0].cls)],
-                "size": tuple(box[0].xywh.tolist()[0])
-            }    
-            
+        return [
+            {
+                "id": int(box.id),
+                "name": predict_result[0].names[int(box.id)],
+                "size": tuple(box.xywh.tolist()[0])
+            }
+            for box in predict_result[0].boxes
+        ] 
+                 
     
     def throw_rod(self, want_fish_name):
         try:
@@ -117,16 +83,10 @@ class Auto_fish():
         
     def main(self):
         want_fish_name = ["Pufferfish", "Bitter Pufferfish"]
-        self.throw_rod(want_fish_name)
+        
+        result = self.detect_fish()
         
         
 if __name__ == "__main__":
-    import pyuac
-    
-    if not pyuac.isUserAdmin():
-        pyuac.runAsAdmin()
-        
-    else:
-        af = Auto_fish(Windows_api.find_window(window_name="原神"))
-        time.sleep(3)
-        af.main()
+    af = Auto_fish(Windows_api.find_window(window_name="原神"))
+    af.main()

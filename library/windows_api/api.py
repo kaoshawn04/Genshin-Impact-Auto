@@ -1,9 +1,9 @@
 import os
 import sys
 import time
-import zlib
 import ctypes
-import struct
+import PIL
+import PIL.Image
 
 try:
     from library.windows_api.common import *
@@ -11,151 +11,287 @@ try:
 except (ImportError, ModuleNotFoundError):
     dir_path = (os.path.realpath(__file__)).rsplit("\\library", 1)[0]
     sys.path.append(dir_path)
-    
+
     from library.windows_api.common import *
 
 
-crc32 = zlib.crc32
 user32 = ctypes.WinDLL("user32")
+kernel32 = ctypes.WinDLL("Kernel32")
 gdi32 = ctypes.WinDLL('gdi32')
 
 
 class Windows_api():
     @staticmethod
-    def find_window(class_name: str = None, window_name: str = None) -> int:
+    def find_window(
+        class_name: str = None,
+        window_name: str = None
+    ) -> int | None:
         """
-        Find window via class and window name,
-        return the handle of the window.
+        Find a window by it's class_name or window_name
 
         Args:
-            class_name:
-                If this is None, it will find any window
-                whose title matches the window_name.
+            class_name (str, optional):
+                If None, will match any window with a matching window_name.
+            
+            window_name (str, optional):
+                If None, will match all window.
   
             window_name:
                 If this is None, it will find all window.
+            
+        Returns:
+            int: 
+                The handle (HWND) of the window,
+                return None if no window is found.
+                
+        Note:
+            - The method return the first matching window if multiple exist.
         """
-        
+        find_window = user32.FindWindowW
+        find_window.argtypes = [ctypes.c_wchar_p, ctypes.c_wchar_p]
+        find_window.restype = ctypes.c_void_p
+
         return user32.FindWindowW(class_name, window_name)
-    
-    
+
+
     @staticmethod
     def set_foreground_window(hwnd: int):
         """
-        Set the window into foreground via handle of the window.
+        Bring a window to the foreground.
+        
+        Args:
+            hwnd (int):
+                The handle (HWND) of the window to bring to the foreground,
+                typically obtained from `find_window` method.
         """
-        
-        user32.SetForegroundWindow(hwnd)
-        
-        
+        set_foreground_window = user32.SetForegroundWindow
+        set_foreground_window.argtypes = [ctypes.c_int]
+        set_foreground_window.restype = ctypes.c_bool
+
+        result = set_foreground_window(hwnd)
+
+        if result is False:
+            raise ctypes.WinError()
+
+
     @staticmethod
-    def get_window_size(hwnd: int) -> dict:
+    def get_window_size(hwnd: int) -> tuple[int]:
+        """
+        Get the size of a specified window.
+        
+        Args:
+            hwnd (int):
+                The handle (HWND) of the window to get size for,
+                typically obtained from `find_window` method.
+                
+        Returns:
+            tuple[int]: 
+                A tuple containing (left, top, width, height) information.
+        """
         rect = ctypes.wintypes.RECT()
-        ctypes.windll.dwmapi.DwmGetWindowAttribute(
+
+        get_window_attribute = ctypes.windll.dwmapi.DwmGetWindowAttribute
+        get_window_attribute.argtypes = [
+            ctypes.c_int,
+            ctypes.c_int,
+            ctypes.POINTER(ctypes.wintypes.RECT),
+            ctypes.c_int
+        ]
+        get_window_attribute.restype = ctypes.c_int
+
+        result = get_window_attribute(
             hwnd,
             DWMWA_EXTENDED_FRAME_BOUNDS,
             ctypes.byref(rect),
             ctypes.sizeof(rect)
         )
-        
-        return (rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top)
-    
-        
+
+        if result == 0:
+            return (
+                rect.left,
+                rect.top,
+                rect.right - rect.left,
+                rect.bottom - rect.top
+            )
+
+        else:
+            raise ctypes.WinError(code=result)
+
+
     @staticmethod
-    def get_screen_size() -> dict:
+    def get_screen_size() -> tuple[int]:
+        """
+        Get the size of the primary monitor.
+                
+        Returns:
+            tuple[int]:
+                A tuple containing (width, height) information.
+        """
         devmode = DEVMODEA()
         devmode.dmSize = ctypes.sizeof(DEVMODEA)
-        
-        user32.EnumDisplaySettingsA(None, -1, ctypes.byref(devmode))
-        
-        return (devmode.dmPelsWidth, devmode.dmPelsHeight)
+
+        enum_display_settings = user32.EnumDisplaySettingsW
+        enum_display_settings.argtypes = [
+            ctypes.c_wchar_p,
+            ctypes.c_int,
+            ctypes.POINTER(DEVMODEA)
+        ]
+        enum_display_settings.restype = ctypes.c_bool
+
+        result = user32.EnumDisplaySettingsW(None, -1, ctypes.byref(devmode))
+
+        if result is False:
+            raise ctypes.WinError()
+
+        else:
+            return (devmode.dmPelsWidth, devmode.dmPelsHeight)
 
 
     @staticmethod
     def get_mouse_position() -> tuple:
-        point = POINT()
-        user32.GetCursorPos(ctypes.byref(point))
+        """
+        Get the current mouse position on the screen.
         
-        return (point.x, point.y)
-    
-    
+        Returns:
+            tuple: 
+                A tuple containing (x, y) coordinates of the mouse.
+        """
+        point = ctypes.wintypes.POINT()
+
+        get_cursor_pos = user32.GetCursorPos
+        get_cursor_pos.argtypes = [ctypes.POINTER(ctypes.wintypes.POINT)]
+        get_cursor_pos.restype = ctypes.c_bool
+
+        result = get_cursor_pos(ctypes.byref(point))
+
+        if result is False:
+            return ctypes.WinError(code=kernel32.GetLastError())
+
+        else:
+            return (point.x, point.y)
+
+
     @staticmethod
-    def get_mouse_speed():
+    def get_mouse_speed() -> int:
+        """
+        Get the mouse speed in the Windows system setting.
+        
+        Returns:
+            tuple: 
+                The mouse speed setting (ranges from 1 to 20).
+        """
         speed = ctypes.c_int()
-        user32.SystemParametersInfoA(SPI_GETMOUSESPEED, 0, ctypes.byref(speed), 0)
-        
-        return speed.value
-    
-    
+
+        system_parameters_info = user32.SystemParametersInfoAW
+        system_parameters_info.argtypes = [
+            ctypes.c_int,
+            ctypes.c_int,
+            ctypes.POINTER(ctypes.c_int),
+            ctypes.c_int
+        ]
+        system_parameters_info.restype = ctypes.c_bool
+
+        result = system_parameters_info(
+            SPI_GETMOUSESPEED,
+            0,
+            ctypes.byref(speed),
+            0
+        )
+
+        if result is False:
+            return ctypes.WinError(code=kernel32.GetLastError())
+
+        else:
+            return speed.value
+
+
     @staticmethod
-    def set_mouse_speed(speed):
-        user32.SystemParametersInfoA(
+    def set_mouse_speed(speed: int):
+        """
+        Set the mouse speed in the Windows system setting.
+        
+        Args:
+            speed (int):
+                The mouse speed setting (ranges from 1 to 20).
+        """
+        system_parameters_info = user32.SystemParametersInfoAW
+        system_parameters_info.argtypes = [
+            ctypes.c_int,
+            ctypes.c_int,
+            ctypes.POINTER(ctypes.c_int),
+            ctypes.c_int
+        ]
+        system_parameters_info.restype = ctypes.c_bool
+
+        result = system_parameters_info(
             SPI_SETMOUSESPEED,
             0,
             speed,
             SPIF_UPDATEINIFILE | SPIF_SENDCHANGE
         )
 
+        if result is False:
+            return ctypes.WinError(code=kernel32.GetLastError())
+
 
     @staticmethod
-    def send_input(
-        type: int,
-        event: int,
-        dx: int = 0,
-        dy: int = 0,
-        mouseData: int = 0,
-        virtual_key: int = 0
-    ):
+    def send_input(input_type: int, event: int, **kwargs):
         """
         Synthesize keystrokes, mouse motions and button clicks.
 
         Args:
-            type: mouse: 0, keyboard: 1
+            input_type: 
+                Type of input to simulate (mouse: 0, keyboard: 1). 
+
             event: 
-                See common.py
-            dx (mouse event):
-                If event is MOUSEEVENTF_ABSOLUTE (0x8000), 
-                this should be int(x * 65535 / screen width).
-                Or this will be the numbers of pixel moved.
-            dy (mouse input):
-                Same as dx.
-            wheel (mouse input):
-                Positive value for rotate forward,
-                negative value for rotate backward.
-            virtual_key (keyboard input): The key in ASCII code.
+                Specific event to simulate. (See common.py)
         """
 
-        input = INPUT(type=ctypes.c_ulong(type))
+        input_message = INPUT(type=ctypes.c_ulong(input_type))
 
-        if type is INPUT_MOUSE:
-            input.mi = MOUSEINPUT(
-                dx=dx,
-                dy=dy,
-                mouseData=mouseData,
-                dwFlags=event,
+        if input_type is INPUT_MOUSE:
+            input_message.mi = MOUSEINPUT(
+                dx=kwargs["dx"],
+                dy=kwargs["dy"],
+                mouseData=kwargs["mouse_data"],
+                dwFlags=kwargs["event"],
                 time=0
             )
 
-        elif type is INPUT_KEYBOARD:
-            input.ki = KEYBDINPUT(
-                wVk=virtual_key,
+        elif input_type is INPUT_KEYBOARD:
+            input_message.ki = KEYBDINPUT(
+                wVk=kwargs["virtual_key"],
                 wScan=0,
                 dwFlags=event,
                 time=0
             )
 
-        user32.SendInput(1, ctypes.pointer(input), ctypes.sizeof(INPUT))
-        
-        
+        user32.SendInput(
+            1,
+            ctypes.pointer(input_message),            
+            ctypes.sizeof(INPUT)
+        )
+
     @staticmethod
-    def screenshot(hwnd: int) -> str:
+    def screenshot(
+        hwnd: int,
+        size: tuple[int] = None,
+        filepath: str = None
+    ) -> str:
         # https://github.com/BoboTiG/python-mss
-        
-        x, y, w, h = Windows_api.get_window_size(hwnd)
-        
+
+        if size is None:
+            x, y, w, h = Windows_api.get_window_size(hwnd)
+
+        else:
+            x, y, w, h = size
+
+        if filepath is None:
+            filepath = f"screenshot/{int(time.time_ns())}.bmp"
+
         srcdc = user32.GetWindowDC(0)
         memdc = gdi32.CreateCompatibleDC(srcdc)
-        
+
         bmi = BITMAPINFO()
         bmi.bmiHeader.biSize = ctypes.sizeof(BITMAPINFOHEADER)
         bmi.bmiHeader.biPlanes = 1
@@ -163,54 +299,28 @@ class Windows_api():
         bmi.bmiHeader.biCompression = 0
         bmi.bmiHeader.biClrUsed = 0
         bmi.bmiHeader.biClrImportant = 0
-        
+
         bmi.bmiHeader.biWidth = w
         bmi.bmiHeader.biHeight = -h
-        
+
         data = ctypes.create_string_buffer(w * h * 4)
-        
+
         bmp = gdi32.CreateCompatibleBitmap(srcdc, w, h)
         gdi32.SelectObject(memdc, bmp)
 
         gdi32.BitBlt(memdc, 0, 0, w, h, srcdc, x, y, SRCCOPY | CAPTUREBLT)
-        bits = gdi32.GetDIBits(memdc, bmp, 0, h, data, bmi, DIB_RGB_COLORS)
-        
+        gdi32.GetDIBits(memdc, bmp, 0, h, data, bmi, DIB_RGB_COLORS)
+
         raw = bytearray(data)
         rgb = bytearray(w * h * 3)
         rgb[::3] = raw[2::4]
         rgb[1::3] = raw[1::4]
         rgb[2::3] = raw[::4]
-        
-        data = bytes(rgb)
-        
-        line = w * 3
-        png_filter = struct.pack(">B", 0)
-        scanlines = b"".join([png_filter + data[y * line : y * line + line] for y in range(h)])
-        
-        magic = struct.pack(">8B", 137, 80, 78, 71, 13, 10, 26, 10)
-        
-        ihdr = [b"", b"IHDR", b"", b""]
-        ihdr[2] = struct.pack(">2I5B", w, h, 8, 2, 0, 0, 0)
-        ihdr[3] = struct.pack(">I", crc32(b"".join(ihdr[1:3])) & 0xFFFFFFFF)
-        ihdr[0] = struct.pack(">I", len(ihdr[2]))
-        
-        idat = [b"", b"IDAT", zlib.compress(scanlines, 6), b""]
-        idat[3] = struct.pack(">I", crc32(b"".join(idat[1:3])) & 0xFFFFFFFF)
-        idat[0] = struct.pack(">I", len(idat[2]))
-        
-        iend = [b"", b"IEND", b"", b""]
-        iend[3] = struct.pack(">I", crc32(iend[1]) & 0xFFFFFFFF)
-        iend[0] = struct.pack(">I", len(iend[2]))
-        
-        filename = f"screenshot/{int(time.time_ns())}.png"
-        
-        with open(filename, "wb") as fileh:
-            fileh.write(magic)
-            fileh.write(b"".join(ihdr))
-            fileh.write(b"".join(idat))
-            fileh.write(b"".join(iend))
 
-            fileh.flush()
-            os.fsync(fileh.fileno())
-            
-        return filename
+        data = bytes(rgb)
+
+        image = PIL.Image.new("RGB", (w, h))
+        image.frombytes(data)
+        image.save(filepath)
+
+        return filepath
