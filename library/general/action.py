@@ -37,7 +37,7 @@ class Mouse():
             event=event,
             dx=x,
             dy=y,
-            mouseData=wheel
+            mouse_data=wheel
         )
 
 

@@ -1,120 +1,68 @@
-from library.config_parser import get_config
+import os
+import sys
+
+try:
+    from library.general.config import get_config
+
+except (ImportError, ModuleNotFoundError):
+    dir_path = (os.path.realpath(__file__)).rsplit("\\library", 1)[0]
+    sys.path.append(dir_path)
+
+    from library.general.config import get_config
 
 
-transpose, higher, lower, middle, notes_list = get_config("transpose", "higher", "lower", "middle", "notes_list")
-notes_list = notes_list.split("\n")
+config = get_config("autolyre.settings", ["Higher", "Lower", "Accidental"])
+
 
 class Converter():
-    def __init__(self, type):
-        self.type = type
+    def __init__(self):
+        self.keys = [
+            ["z", "x", "c", "v", "b", "n", "m"],
+            ["a", "s", "d", "f", "g", "h", "j"],
+            ["q", "w", "e", "r", "t", "y", "u"]
+        ]
+        self.frequency_bias = [0, 2, 4, 5, 7, 9, 11]
+
     
-    def frequent_to_key(self, note):
-        note = self.process_special_notes(note)
+    def frequency_to_key(self, frequency):
+        frequency = self.special_frequency(frequency)
         key = ""
         
-        match note:
-            case 48: key = "z"
-            case 50: key = "x"
-            case 52: key = "c"
-            case 53: key = "v"
-            case 55: key = "b"
-            case 57: key = "n"
-            case 59: key = "m"
-
-            case 60: key = "a"
-            case 62: key = "s"
-            case 64: key = "d"
-            case 65: key = "f"
-            case 67: key = "g"
-            case 69: key = "h"
-            case 71: key = "j"
-
-            case 72: key = "q"
-            case 74: key = "w"
-            case 76: key = "e"
-            case 77: key = "r"
-            case 79: key = "t"
-            case 81: key = "y"
-            case 83: key = "u"
+        if frequency is None:
+            key = None
         
-            case "none": key = "none"
-            case default: key = note
+        elif 48 <= frequency <= 83:
+            rol = frequency // 12 - 4
+            col = self.frequency_bias.index(frequency % 12)
+            
+            key = self.keys[rol][col]
         
         return key
         
-    def note_to_key(self, note):
-        note = self.process_special_notes(note)
-        key = []
-        
-        match note:
-            case ".do": key = "q"
-            case ".re": key = "w"
-            case ".mi": key = "e"
-            case ".fa": key = "r"
-            case ".sol": key = "t"
-            case ".la": key = "y"
-            case ".si": key = "u"
-
-            case "do": key = "a"
-            case "re": key = "s"
-            case "mi": key = "d"
-            case "fa": key = "f"
-            case "sol": key = "g"
-            case "la": key = "h"
-            case "si": key = "j"
-
-            case "do.": key = "z"
-            case "re.": key = "x"
-            case "mi.": key = "c"
-            case "fa.": key = "v"
-            case "sol.": key = "b"
-            case "la.": key = "n"
-            case "si.": key = "m"
-        
-            case "none": key = "none"
-            case default: key = note
-        
-        return key
     
-    def process_special_notes(self, note):
-        if self.type == "json_sheet" and note != "none":
-            if notes_list.index(note) > 27:
-                match higher:
-                    case "skip": note = "none"
-                    case "fall_to_si": note = ".si"
-                    
-            elif notes_list.index(note) < 7:
-                match lower:
-                    case "skip": note = "none"
-                    case "rise_to_do": note = "do."
+    def special_frequency(self, frequency):
+        if frequency is None:
+            return None
+        
+        if frequency % 12 not in self.frequency_bias:
+            match config["Accidental"]:
+                case "sharp": frequency += 1
+                case "flat": frequency -= 1
                 
-        elif self.type == "midi" and note != "none":
-            if note % 12 in [1, 3, 6, 8, 10]:
-                match middle:
-                    case "rise": note += 1
-                    case "fall": note -= 1
-                    
-            if transpose == "false":
-                while note > 83 or note < 48:
-                    if note > 83:
-                        match higher:
-                            case "skip": note = "none"
-                            case "fall_to_si": note = 83
-                            case "fall_8": note -= 12
-
-                    elif note < 48:
-                        match lower:
-                            case "skip": note = "none"
-                            case "rise_to_do": note = 48
-                            case "rise_8": note += 12
+                case "skip": return None
         
-        return note
-    
-    def convert(self, note):
-        if self.type == "json_sheet":
-            result = self.note_to_key(note)
-            
-        elif self.type == "midi":
-            result = self.frequent_to_key(note)
-            
-        return result
+        if frequency > 83:
+            match config["Higher"]:
+                case "flat_b6": frequency = 83
+                case "flat_8":  frequency -= ((frequency - 83) // 12 + 1) * 12
+                
+                case "skip": return None
+
+        elif frequency < 48:
+            match config["Lower"]:
+                case "sharp_c4": frequency = 48
+                case "sharp_8": frequency += ((48 - frequency) // 12 + 1) * 12
+                
+                case "skip": return None
+                
+        return frequency

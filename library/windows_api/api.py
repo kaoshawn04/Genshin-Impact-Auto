@@ -1,9 +1,8 @@
 import os
 import sys
+import PIL
 import time
 import ctypes
-import PIL
-import PIL.Image
 
 try:
     from library.windows_api.common import *
@@ -15,9 +14,9 @@ except (ImportError, ModuleNotFoundError):
     from library.windows_api.common import *
 
 
+gdi32 = ctypes.WinDLL("gdi32")
 user32 = ctypes.WinDLL("user32")
 kernel32 = ctypes.WinDLL("Kernel32")
-gdi32 = ctypes.WinDLL('gdi32')
 
 
 class Windows_api():
@@ -182,7 +181,7 @@ class Windows_api():
         """
         speed = ctypes.c_int()
 
-        system_parameters_info = user32.SystemParametersInfoAW
+        system_parameters_info = user32.SystemParametersInfoW
         system_parameters_info.argtypes = [
             ctypes.c_int,
             ctypes.c_int,
@@ -214,11 +213,11 @@ class Windows_api():
             speed (int):
                 The mouse speed setting (ranges from 1 to 20).
         """
-        system_parameters_info = user32.SystemParametersInfoAW
+        system_parameters_info = user32.SystemParametersInfoW
         system_parameters_info.argtypes = [
             ctypes.c_int,
             ctypes.c_int,
-            ctypes.POINTER(ctypes.c_int),
+            ctypes.c_int,
             ctypes.c_int
         ]
         system_parameters_info.restype = ctypes.c_bool
@@ -254,7 +253,7 @@ class Windows_api():
                 dx=kwargs["dx"],
                 dy=kwargs["dy"],
                 mouseData=kwargs["mouse_data"],
-                dwFlags=kwargs["event"],
+                dwFlags=event,
                 time=0
             )
 
