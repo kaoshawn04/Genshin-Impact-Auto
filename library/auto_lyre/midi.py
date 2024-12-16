@@ -21,14 +21,9 @@ class Midi():
         self.convert = Converter().frequency_to_key
 
 
-    def get_information(self, messages):
-        return {
-            "duration": sum(message[1] for message in messages)
-        }
-
-
     def process(self, filepath):
         midi = mido.MidiFile(filepath, clip=True)
+        
         result = []
 
         for i, message in enumerate(midi):
@@ -70,7 +65,10 @@ class Midi():
                 
             result[i] = tuple(result[i])
             
-        result.insert(0, self.get_information(result))
+        result.insert(0, {
+            "filepath": filepath,
+            "duration": sum(message[1] for message in result)
+        })
                 
         return result
     
