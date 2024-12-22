@@ -3,6 +3,7 @@ import re
 import sys
 import lxml
 import mido
+import time
 import requests
 import requests_html
 
@@ -73,36 +74,44 @@ class Midi():
         return result
     
     
-    def search_musescore(self, query):
-        url = f"https://musescore.com/sheetmusic?text={query}"
-        
-        with requests_html.HTMLSession() as session:
-            response = session.get(url=url)
-            response.html.render() 
-        
-        tree = lxml.html.fromstring(response.html.html)
-        scores = tree.xpath(
-            "/html/body/div[1]/div/section/section/main/div[2]/section/article"
-        )
-        
+    def search_musescore(self, query, num = 20):
+        count, page = 0, 1
         result = []
         
-        for score in scores:
-            instrument = score.xpath("./div[1]/div[2]/div[4]/a/div")[0]
+        while count < num:
+            url = f"https://musescore.com/sheetmusic?page={page}&text={query}"
             
-            if instrument.text != "Solo Piano":
-                continue
-             
-            title = score.xpath("./div[1]/div[2]/a/h2/text() | ./div[1]/div[2]/a/h2/span/text()")
-            info = score.xpath("./div[1]/div[2]/div[2]")[0]
-            url = score.xpath("./div[1]/div[2]/a")[0]
+            with requests_html.HTMLSession() as session:
+                response = session.get(url=url)
+                response.html.render() 
             
-            result.append({
-                "title": "".join(title),
-                "duration": re.search(r"\d\d:\d\d", info.text).group(),
-                "url": url.get("href")
-            })
+            tree = lxml.html.fromstring(response.html.html)
+            scores = tree.xpath(
+                "/html/body/div[1]/div/section/section/main/div[2]/section/article"
+            )
             
+            for score in scores:
+                if count == num:
+                    break
+                
+                instrument = score.xpath("./div[1]/div[2]/div[4]/a/div")[0]
+                
+                if instrument.text != "Solo Piano":
+                    continue
+                
+                title = score.xpath("./div[1]/div[2]/a/h2/text() | ./div[1]/div[2]/a/h2/span/text()")
+                information = score.xpath("./div[1]/div[2]/div[2]")[0]
+                url = score.xpath("./div[1]/div[2]/a")[0]
+                
+                result.append({
+                    "title": "".join(title),
+                    "duration": re.search(r"\d\d:\d\d", information.text).group(),
+                    "url": url.get("href")
+                })
+                
+                count += 1
+            page += 1
+                
         return result
             
         
