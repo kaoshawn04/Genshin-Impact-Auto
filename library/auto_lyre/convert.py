@@ -1,3 +1,4 @@
+import re
 import os
 import sys
 
@@ -11,11 +12,13 @@ except (ImportError, ModuleNotFoundError):
     from library.general.config import get_config
 
 
-config = get_config("autolyre.settings", ["Higher", "Lower", "Accidental"])
+config = get_config("autolyre.settings")
 
 
 class Converter():
     def __init__(self):
+        self.lowest, self.highest = 36, 71
+        
         self.keys = [
             ["z", "x", "c", "v", "b", "n", "m"],
             ["a", "s", "d", "f", "g", "h", "j"],
@@ -25,14 +28,17 @@ class Converter():
 
     
     def frequency_to_key(self, frequency):
+        if re.sub("[+-]", "", config["Transpose"]).isdigit():
+            frequency += int(config["Transpose"])
+            
         frequency = self.special_frequency(frequency)
         key = ""
         
         if frequency is None:
             key = None
         
-        elif 48 <= frequency <= 83:
-            rol = frequency // 12 - 4
+        elif self.lowest <= frequency <= self.highest:
+            rol = frequency // 12 - (self.lowest // 12)
             col = self.frequency_bias.index(frequency % 12)
             
             key = self.keys[rol][col]
@@ -51,17 +57,17 @@ class Converter():
                 
                 case "skip": return None
         
-        if frequency > 83:
+        if frequency > self.highest:
             match config["Higher"]:
-                case "flat_b6": frequency = 83
-                case "flat_8":  frequency -= ((frequency - 83) // 12 + 1) * 12
+                case "flat_highest": frequency = self.highest
+                case "flat_12":  frequency -= ((frequency - self.highest) // 12 + 1) * 12
                 
                 case "skip": return None
 
-        elif frequency < 48:
+        elif frequency < self.lowest:
             match config["Lower"]:
-                case "sharp_c4": frequency = 48
-                case "sharp_8": frequency += ((48 - frequency) // 12 + 1) * 12
+                case "sharp_lowest": frequency = self.lowest
+                case "sharp_12": frequency += ((self.lowest - frequency) // 12 + 1) * 12
                 
                 case "skip": return None
                 

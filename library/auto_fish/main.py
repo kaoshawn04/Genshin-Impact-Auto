@@ -88,21 +88,3 @@ class Auto_fish():
         want_fish_name = ["Pufferfish", "Bitter Pufferfish"]
         
         result = self.detect_fish()
-        
-        
-if __name__ == "__main__":
-    if not pyuac.isUserAdmin():
-        pyuac.runAsAdmin()
-        
-    else:
-        try:
-            af = Auto_fish(Windows_api.find_window(window_name="原神"))
-            
-            for i in range(100):
-                print(af.detect_fish(), "\n")
-                
-                Mouse.move(x=-10, y=0)
-                
-        except Exception:
-            print(traceback.format_exc())
-            time.sleep(50)  

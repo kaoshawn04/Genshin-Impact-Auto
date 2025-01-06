@@ -1,11 +1,11 @@
 import configparser
 
 
-def get_config(section: str, args: list):
+def get_config(section: str):
     config = configparser.ConfigParser()
     config.read("config/config.ini")
     
     return {
-        arg: config[section][arg]
-        for arg in args
+        key: config[section][key]
+        for key in config[section]
     }

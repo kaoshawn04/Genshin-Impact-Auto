@@ -93,6 +93,13 @@ virtual_key_map = {
 }
 
 
+# 
+MOD_ALT = 0x0001
+MOD_CONTROL = 0x0002
+MOD_SHIFT = 0x0004
+MOD_WIN = 0x0008
+
+
 # get screen size
 class DEVMODEA(ctypes.Structure):
     _fields_ = [

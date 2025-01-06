@@ -4,6 +4,9 @@ import PIL
 import time
 import ctypes
 
+from ctypes import wintypes
+
+
 try:
     from library.windows_api.common import *
 
@@ -87,7 +90,7 @@ class Windows_api():
             tuple[int]: 
                 A tuple containing (left, top, width, height) information.
         """
-        rect = ctypes.wintypes.RECT()
+        rect = wintypes.RECT()
 
         get_window_attribute = ctypes.windll.dwmapi.DwmGetWindowAttribute
         get_window_attribute.argtypes = [
@@ -271,6 +274,33 @@ class Windows_api():
             ctypes.sizeof(INPUT)
         )
 
+
+    @staticmethod
+    def get_message():
+        peek_message = user32.PeekMessageW
+        peek_message.argtypes = [
+            ctypes.POINTER(wintypes.MSG),
+            wintypes.HWND,
+            ctypes.c_uint,
+            ctypes.c_uint,
+            ctypes.c_uint
+        ]
+        peek_message.restype = ctypes.c_bool
+        
+        msg = wintypes.MSG()
+        msg.hWnd = None
+        
+        result = peek_message(ctypes.pointer(msg), None, 0, 0, 0x0001)
+        
+        return msg.message
+        
+        #if result is False:
+        #    return None
+        
+        #else:
+        #    return msg
+        
+
     @staticmethod
     def screenshot(
         hwnd: int,
@@ -323,3 +353,10 @@ class Windows_api():
         image.save(filepath)
 
         return filepath
+    
+    
+if __name__ == "__main__":
+    while True:
+        print(msg := Windows_api.get_message())
+        
+        time.sleep(0.1)

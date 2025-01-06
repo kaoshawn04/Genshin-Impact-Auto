@@ -3,7 +3,6 @@ import re
 import sys
 import lxml
 import mido
-import time
 import requests
 import requests_html
 
@@ -23,7 +22,7 @@ class Midi():
 
 
     def process(self, filepath):
-        midi = mido.MidiFile(filepath, clip=True)
+        midi = mido.MidiFile(filepath)
         
         result = []
 
@@ -33,26 +32,25 @@ class Midi():
 
                 if velocity > 0: # key down
                     if time > 0: # create new message
-                        r = [[self.convert(frequency)], time]
+                        result.append([{self.convert(frequency)}, round(time, 3)])
 
                     elif time == 0: # combine with last message in result
-                        if len(result) > 0: #and result[-1][0] != [None]:
-                            result[-1][0].append(self.convert(frequency))
+                        if len(result) > 0:
+                            result[-1][0].add(self.convert(frequency))
 
-                        else: # result is empty, then create new message
-                            r = [[self.convert(frequency)], time]
-
-                    result.append(r)
+                        else: # result is empty, create new message
+                            result.append([{self.convert(frequency)}, round(time, 3)])
                 
                 elif velocity == 0: # key up
                     if time > 0:
-                        result.append([[None], time])
+                        result.append([{None}, round(time, 3)])
                         
             elif type == "control_change":
                 time = message.time
                 
                 if time > 0:
-                    result.append([[None], time])
+                    result.append([{None}, round(time, 3)])
+
                     
         for i in range(len(result)):
             if (i + 1) == len(result):
@@ -62,13 +60,16 @@ class Midi():
                 result[i][1] = result[i + 1][1]
             
             if len(result[i][0]) > 1 and None in result[i][0]:
-                result[i][0].remove(None)
+                result[i][0].discard(None)
                 
+            result[i][0] = list(result[i][0])
             result[i] = tuple(result[i])
             
         result.insert(0, {
             "filepath": filepath,
-            "duration": sum(message[1] for message in result)
+            "duration": sum(message[1] for message in result),
+            "message_count": len(result),
+            #"keys_count": filter(lambda: message[0][0] is not None, result)
         })
                 
         return result
@@ -136,3 +137,6 @@ class Midi():
         
         with open(filepath, "wb") as file:
             file.write(response.content)
+            
+            
+Midi().download_musescore("https://musescore.com/user/37397149/scores/6591821")

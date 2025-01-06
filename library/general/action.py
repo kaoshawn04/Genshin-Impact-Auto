@@ -157,7 +157,8 @@ class Keyboard():
 
     @staticmethod
     def press(keys: str | list, interval: float = MINIUM_INTERVAL):
-        keys = [keys] if type(keys) != list else keys
+        keys = keys if isinstance(keys, list) else list(keys)
+        
         for key in keys:
             Keyboard._keyboard_event(event=KEYEVENTF_KEYDOWN, key=key)
             time.sleep(interval)
@@ -166,13 +167,15 @@ class Keyboard():
 
     @staticmethod
     def keydown(keys: str | list):
-        keys = [keys] if type(keys) != list else keys
+        keys = keys if isinstance(keys, list) else list(keys)
+        
         for key in keys:
             Keyboard._keyboard_event(event=KEYEVENTF_EXTENDEDKEY, key=key)
 
 
     @staticmethod
     def keyup(keys: str | list):
-        keys = [keys] if type(keys) != list else keys
+        keys = keys if isinstance(keys, list) else list(keys)
+        
         for key in keys:
             Keyboard._keyboard_event(event=KEYEVENTF_KEYUP, key=key)

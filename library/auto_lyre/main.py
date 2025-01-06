@@ -54,20 +54,21 @@ class Hotkey():
 
 def play(sheet):
     information = sheet.pop(0)
-    Hotkey().start()
+    #Hotkey().start()
     
     for element in sheet:
-        print(speed)
+        #print(speed)
         press_keys, wait = element[0], element[1]
+        print(press_keys, wait)
         
         if len(press_keys) == 1:
             if press_keys[0] is not None:
-                Keyboard.press(press_keys[0])
+                Keyboard.press(press_keys)
         
         else:
             Keyboard.press(press_keys)
         
-        time.sleep(wait * (1 / speed))
+        time.sleep(wait)# * (1 / speed))
 
 
 if __name__ == "__main__":
@@ -80,4 +81,5 @@ if __name__ == "__main__":
         window = Windows_api.find_window(window_name="原神")
         Windows_api.set_foreground_window(window)
         time.sleep(3)
-        play(Midi().process("assets/midi/test.mid"))
+        sheet = Midi().process("midi/Never_Gonna_Give_You_Up.mid")
+        play(sheet)

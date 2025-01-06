@@ -1,20 +1,3 @@
-import trace
-import mido
-
-
-def test():
-    midi = mido.MidiFile("assets/midi/test.mid")
-
-    #for i, message in enumerate(midi):
-    #    if i >= 10:
-    #        break
-        
-    #    if message.type == "note_on":
-    #        frequency, velocity, time = message.note, message.velocity, message.time
-    
-
-tracer = trace.Trace(countfuncs=1)
-tracer.run("test()")
-
-result = tracer.results()
-result.write_results(summary=True)
+with open("C:/Users/kaosh/OneDrive/桌面/Genshin-Impact-Auto/midi/Never_Gonna_Give_You_Up.mid", "rb") as file:
+    while byte := file.read(1):
+        print(byte.hex(), end=" ")
