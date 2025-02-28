@@ -6,6 +6,7 @@ import mido
 import requests
 import requests_html
 
+
 try:
     from library.auto_lyre.convert import Converter
 
@@ -19,14 +20,14 @@ except (ImportError, ModuleNotFoundError):
 class Midi():
     def __init__(self):
         self.convert = Converter().frequency_to_key
-
+        
 
     def process(self, filepath):
-        midi = mido.MidiFile(filepath)
+        midi_file = mido.MidiFile(filepath)
         
         result = []
 
-        for i, message in enumerate(midi):
+        for i, message in enumerate(midi_file):
             if message.type == "note_on":
                 frequency, velocity, time = message.note, message.velocity, message.time
 
@@ -69,7 +70,6 @@ class Midi():
             "filepath": filepath,
             "duration": sum(message[1] for message in result),
             "message_count": len(result),
-            #"keys_count": filter(lambda: message[0][0] is not None, result)
         })
                 
         return result
@@ -137,6 +137,3 @@ class Midi():
         
         with open(filepath, "wb") as file:
             file.write(response.content)
-            
-            
-Midi().download_musescore("https://musescore.com/user/37397149/scores/6591821")
