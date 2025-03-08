@@ -3,13 +3,13 @@ import os
 import sys
 
 try:
-    from library.general.config import get_config
+    from library.common.config import get_config
 
 except (ImportError, ModuleNotFoundError):
     dir_path = (os.path.realpath(__file__)).rsplit("\\library", 1)[0]
     sys.path.append(dir_path)
 
-    from library.general.config import get_config
+    from library.common.config import get_config
 
 
 config = get_config("autolyre.settings")

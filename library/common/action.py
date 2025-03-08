@@ -3,15 +3,15 @@ import sys
 import time
 
 try:
-    from library.windows_api.api import Windows_api
-    from library.windows_api.common import *
+    from library.windows.api import Windows_api
+    from library.windows.base import *
 
 except (ImportError, ModuleNotFoundError):
     dir_path = (os.path.realpath(__file__)).rsplit("\\library", 1)[0]
     sys.path.append(dir_path)
 
-    from library.windows_api.api import Windows_api
-    from library.windows_api.common import *
+    from library.windows.api import Windows_api
+    from library.windows.base import *
 
 
 MINIUM_INTERVAL = 0.001

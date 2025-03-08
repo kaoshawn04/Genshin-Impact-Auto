@@ -7,15 +7,15 @@ import traceback
 from ultralytics import YOLO
 
 try:
-    from library.general.action import Mouse, Keyboard
-    from library.windows_api.api import Windows_api
+    from library.common.action import Mouse, Keyboard
+    from library.windows.api import Windows_api
 
 except (ImportError, ModuleNotFoundError):
     dir_path = (os.path.realpath(__file__)).rsplit("\\library", 1)[0]
     sys.path.append(dir_path)
     
-    from library.general.action import Mouse, Keyboard
-    from library.windows_api.api import Windows_api
+    from library.common.action import Mouse, Keyboard
+    from library.windows.api import Windows_api
 
 
 class Auto_fish():
