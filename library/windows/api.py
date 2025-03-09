@@ -313,7 +313,9 @@ class Windows_api():
             x, y, w, h = Windows_api.get_window_size(hwnd)
 
         else:
-            x, y, w, h = size
+            x = size[0] + Windows_api.get_window_size(hwnd)[0]
+            y = size[1] + Windows_api.get_window_size(hwnd)[1]
+            w, y = size[2], size[3]
 
         if filepath is None:
             filepath = f"screenshot/{int(time.time_ns())}.bmp"

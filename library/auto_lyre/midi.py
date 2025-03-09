@@ -9,13 +9,18 @@ import requests_html
 
 try:
     from library.auto_lyre.convert import Converter
+    from library.common.config import get_config
+
 
 except (ImportError, ModuleNotFoundError):
     dir_path = (os.path.realpath(__file__)).rsplit("\\library", 1)[0]
     sys.path.append(dir_path)
 
     from library.auto_lyre.convert import Converter
+    from library.common.config import get_config
 
+
+config = get_config("autolyre.settings")
 
 class Midi():
     def __init__(self):
@@ -26,10 +31,16 @@ class Midi():
         midi_file = mido.MidiFile(filepath)
         
         result = []
+        
+        transpose_bias = 0
 
         for i, message in enumerate(midi_file):
             if message.type == "note_on":
                 frequency, velocity, time = message.note, message.velocity, message.time
+                
+                if bool(config["transpose"]) == True:
+                    print(transpose_bias)
+                    frequency += transpose_bias
 
                 if velocity > 0: # key down
                     if time > 0: # create new message
@@ -46,13 +57,26 @@ class Midi():
                     if time > 0:
                         result.append([{None}, round(time, 3)])
                         
-            elif type == "control_change":
+            elif message.type == "control_change":
                 time = message.time
                 
                 if time > 0:
                     result.append([{None}, round(time, 3)])
-
                     
+            elif message.type == "key_signature":
+                key = message.key[0]
+                key_bias = {
+                    "C": 0,
+                    "D": -2,
+                    "E": -4,
+                    "F": -5,
+                    "G": -7,
+                    "A": -9,
+                    "B": -11
+                }
+                
+                transpose_bias = key_bias[key]
+
         for i in range(len(result)):
             if (i + 1) == len(result):
                 result[i][1] = 0
@@ -137,3 +161,20 @@ class Midi():
         
         with open(filepath, "wb") as file:
             file.write(response.content)
+            
+            
+if __name__ == "__main__":
+    midi_file = mido.MidiFile("C:/Users/kaosh/OneDrive/桌面/Genshin-Impact-Auto/midi/Never_Gonna_Give_You_Up.mid")
+    
+    for message in midi_file:
+        if message.type == "key_signature":
+            print(message.key[0])
+            
+"""
+D 2
+E 4
+F 5
+G 7
+A 9
+B 11
+"""       

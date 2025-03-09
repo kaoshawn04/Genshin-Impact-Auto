@@ -28,9 +28,6 @@ class Converter():
 
     
     def frequency_to_key(self, frequency):
-        if re.sub("[+-]", "", config["Transpose"]).isdigit():
-            frequency += int(config["Transpose"])
-            
         frequency = self.special_frequency(frequency)
         key = ""
         
@@ -51,21 +48,21 @@ class Converter():
             return None
         
         if frequency % 12 not in self.frequency_bias:
-            match config["Accidental"]:
+            match config["accidental"]:
                 case "sharp": frequency += 1
                 case "flat": frequency -= 1
                 
                 case "skip": return None
         
         if frequency > self.highest:
-            match config["Higher"]:
+            match config["higher"]:
                 case "flat_highest": frequency = self.highest
                 case "flat_12":  frequency -= ((frequency - self.highest) // 12 + 1) * 12
                 
                 case "skip": return None
 
         elif frequency < self.lowest:
-            match config["Lower"]:
+            match config["lower"]:
                 case "sharp_lowest": frequency = self.lowest
                 case "sharp_12": frequency += ((self.lowest - frequency) // 12 + 1) * 12
                 

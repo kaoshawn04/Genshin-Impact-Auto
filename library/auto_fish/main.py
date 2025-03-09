@@ -2,6 +2,7 @@ import os
 import sys
 import time
 import pyuac
+import threading
 import traceback
 
 from ultralytics import YOLO
@@ -9,6 +10,7 @@ from ultralytics import YOLO
 try:
     from library.common.action import Mouse, Keyboard
     from library.windows.api import Windows_api
+    from library.common.config import get_config
 
 except (ImportError, ModuleNotFoundError):
     dir_path = (os.path.realpath(__file__)).rsplit("\\library", 1)[0]
@@ -16,27 +18,52 @@ except (ImportError, ModuleNotFoundError):
     
     from library.common.action import Mouse, Keyboard
     from library.windows.api import Windows_api
+    from library.common.config import get_config
+
+
+config = get_config("autofish.settings")
 
 
 class Auto_fish():
-    def __init__(self, hwnd, confidence_threshold = 0.8):
+    def __init__(self, hwnd):
         self.hwnd = hwnd
         self.hwnd_size = Windows_api.get_window_size(self.hwnd)
         
-        self.confidence_threshold = confidence_threshold
-        
+        self.confidence_threshold = float(config["confidence_threshold"])
+                
         self.model = YOLO("C:/Users/kaosh/OneDrive/桌面/GENSHIN-IMPACT-AUTO/assets/yolo model/best.pt")
-        self.model.track(persist=False)
+        self.model.track(persist=False, verbose=False)
     
     
-    def detect_fish(self, source_path = None, target_name = None, target_id = None):
-        if source_path is None:
-            source_path = Windows_api.screenshot(self.hwnd)
+    def detect_fish(self, source = None):
+        if source is None:
+            source = Windows_api.screenshot(self.hwnd)
+            
+        detection = self.model.predict(
+            source  ,
+            conf=self.confidence_threshold,
+            verbose=False
+        )
+        
+        result = []
+        
+        for box in detection[0].boxes:
+            result.append({
+                "name": detection[0].names[int(box.cls)],
+                "size": tuple(map(int, box.xywh.tolist()[0]))
+            })
+        
+        return result
+    
+    
+    def track_fish(self, source = None):
+        if source is None:
+            source = Windows_api.screenshot(self.hwnd)
         
         counter = 0
         
-        predict_result = self.model.track(
-            source=source_path,
+        detection = self.model.track(
+            source,
             conf=self.confidence_threshold,
             verbose=False,
             persist=True,
@@ -45,10 +72,10 @@ class Auto_fish():
         
         result = []
         
-        for box in predict_result[0].boxes:
+        for box in detection[0].boxes:
             result.append({
                 "id": int(box.id) if box.id else None,
-                "name": predict_result[0].names[int(box.cls)],
+                "name": detection[0].names[int(box.cls)],
                 "size": tuple(map(int, box.xywh.tolist()[0]))
             })
 
@@ -88,3 +115,9 @@ class Auto_fish():
         want_fish_name = ["Pufferfish", "Bitter Pufferfish"]
         
         result = self.detect_fish()
+        print(result)
+        
+
+if __name__ == "__main__":
+    af = Auto_fish(Windows_api.find_window(window_name="原神"))
+    af.main()
